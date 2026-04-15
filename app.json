@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "name": "FitApp",
+    "slug": "fitapp",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#0f0f0f",
+    "splash": {
+      "backgroundColor": "#0f0f0f"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.tuapp.fitapp"
+    },
+    "android": {
+      "package": "com.tuapp.fitapp",
+      "permissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-av",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FitApp necesita acceso a tus fotos para agregar imágenes a los ejercicios."
+        }
+      ]
+    ],
+    "scheme": "fitapp",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "22aa2f7f-a40e-45bf-8125-fe83f3322655"
+      }
+    },
+    "owner": "albore"
+  }
+}
