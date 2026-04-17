@@ -6,9 +6,10 @@ import { C, radius, font } from '../data/theme';
 import { ProgressBar, SetCircle, TimerRing, Btn } from '../components/UI';
 import { MediaThumbnail } from '../components/MediaThumbnail';
 import { useExercisesContext } from '../contexts/ExercisesContext';
+import { useRoutinesContext } from '../contexts/RoutinesContext';
 import { useTimer, useCountdown } from '../hooks/useTimer';
-import { ROUTINE_FUERZA_A, MUSCLE_EMOJIS } from '../data/data';
-import { Exercise } from '../data/types';
+import { MUSCLE_EMOJIS } from '../data/data';
+import { Exercise, RoutineExercise } from '../data/types';
 import { fmtTime } from '../data/utils';
 
 interface WorkoutItem extends Exercise {
@@ -21,8 +22,9 @@ interface WorkoutItem extends Exercise {
 
 export default function WorkoutScreen() {
   const router = useRouter();
-  const { singleExId } = useLocalSearchParams<{ singleExId?: string }>();
+  const { singleExId, routineId } = useLocalSearchParams<{ singleExId?: string; routineId?: string }>();
   const { exercises } = useExercisesContext();
+  const { routines } = useRoutinesContext();
   const clock = useTimer(true);
   const countdown = useCountdown(60);
 
@@ -46,16 +48,29 @@ export default function WorkoutScreen() {
       if (!ex) return;
       list = [{ ...ex, wSets: ex.sets, wReps: ex.reps, wWeight: ex.weight + ' kg', wRest: ex.rest, currentSet: 1 }];
     } else {
-      list = ROUTINE_FUERZA_A.map(item => {
-        const ex = exercises.find(e => e.id === item.exId)!;
+      const routine = routineId
+        ? routines.find(r => r.id === Number(routineId))
+        : routines[0];
+      const source: RoutineExercise[] = routine?.exercises ?? [];
+      list = source.map(item => {
+        const ex = exercises.find(e => e.id === item.exId);
+        if (!ex) return null;
         return { ...ex, wSets: item.sets, wReps: item.reps, wWeight: item.weight, wRest: item.rest, currentSet: 1 };
-      }).filter(Boolean);
+      }).filter(Boolean) as WorkoutItem[];
+    }
+    if (!list.length) {
+      Alert.alert(
+        'Sin ejercicios',
+        'Esta rutina no tiene ejercicios configurados. Agregá al menos uno antes de empezar.',
+        [{ text: 'OK', onPress: () => router.back() }],
+      );
+      return;
     }
     setItems(list);
     setTotalSets(list.reduce((a, i) => a + i.wSets, 0));
     clock.start();
     setReady(true);
-  }, [exercises]);
+  }, [exercises, routines, singleExId, routineId]);
 
   const startPause = useCallback((secs: number, cb: () => void) => {
     setMode('pause');

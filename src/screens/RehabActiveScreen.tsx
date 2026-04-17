@@ -22,7 +22,11 @@ export default function RehabActiveScreen() {
   const [pauseNext, setPauseNext] = useState('');
   const cbRef = useRef<(() => void) | null>(null);
 
-  useEffect(() => { activateKeepAwakeAsync(); return () => deactivateKeepAwake(); }, []);
+  // @ts-expect-error Async function in useEffect
+  useEffect(() => {
+    activateKeepAwakeAsync();
+    return () => deactivateKeepAwake();
+  }, []);
 
   useEffect(() => {
     if (countdown.seconds === 0 && !countdown.running && mode === 'pause' && cbRef.current) {

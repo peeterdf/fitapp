@@ -75,7 +75,7 @@ export default function ExerciseDetailScreen() {
 
         <Btn
           label="▶  Empezar este ejercicio"
-          onPress={() => router.push({ pathname: '/workout', params: { singleExId: ex.id } })}
+          onPress={() => router.push({ pathname: '/workout', params: { singleExId: String(ex.id) } })}
         />
         <View style={{ height: 40 }} />
       </ScrollView>

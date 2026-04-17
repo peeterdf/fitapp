@@ -3,6 +3,7 @@
     "name": "FitApp",
     "slug": "fitapp",
     "version": "1.0.0",
+    "icon": "./icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0f0f0f",

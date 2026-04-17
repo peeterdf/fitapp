@@ -1,0 +1,29 @@
+[
+  {
+    "id": 1,
+    "name": "Bench Press",
+    "muscle": "Pecho",
+    "equipment": "Barra olímpica",
+    "startWeight": 80,
+    "startReps": "8-10",
+    "description": "Press de banca con barra olímpica"
+  },
+  {
+    "id": 2,
+    "name": "Sentadilla",
+    "muscle": "Piernas",
+    "equipment": "Barra olímpica",
+    "startWeight": 120,
+    "startReps": "6-8",
+    "description": "Sentadilla con barra"
+  },
+  {
+    "id": 3,
+    "name": "Dominadas",
+    "muscle": "Espalda",
+    "equipment": "Peso corporal",
+    "startWeight": 0,
+    "startReps": "8-12",
+    "description": "Dominadas con peso corporal"
+  }
+]
