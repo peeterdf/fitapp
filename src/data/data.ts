@@ -1,5 +1,15 @@
 import { Exercise, Routine, RoutineExercise, RehabBloque } from './types';
 
+export interface RoutineTemplate {
+  id: string;
+  name: string;
+  emoji: string;
+  desc: string;
+  days: string;
+  duration: string;
+  exercises: RoutineExercise[];
+}
+
 export const DEFAULT_EXERCISES: Exercise[] = [
   {
     id: 1, name: 'Press Banca',
@@ -98,6 +108,100 @@ export const REHAB_DATA: RehabBloque[] = [
       { name: 'Estocada lateral con patín', emoji: '⛸️', reps: '×8 cada lado', desc: 'Un pie sobre hoja o toalla que resbale. Deslizás en estocada y volvés controlando el regreso.', equip: ['Hoja / toalla', 'Piso liso'], tip: 'La pierna que trabaja es la que no resbala', youtube: '' },
       { name: 'Skipping con banda negra + roja', emoji: '⚫', reps: '×40 cada pierna', desc: 'Ambas bandas enganchadas a la cintura. Pasás por dentro. Skipping rápido y explosivo.', equip: ['Banda negra', 'Banda roja', 'Punto fijo a altura cintura'], tip: 'Cuanto más rápido el skipping, mejor el estímulo', youtube: '' },
       { name: 'Saltos laterales sobre obstáculo', emoji: '🏃', reps: '×6 cada lado', desc: 'Objeto en el piso. Saltás lateralmente por encima. Ida y vuelta = 1 rep. Aterrizás suave.', equip: ['Objeto como obstáculo'], tip: 'Aterrizaje suave: absorbé el impacto con las rodillas', youtube: '' },
+    ],
+  },
+];
+
+// ─── ROUTINE TEMPLATES ───────────────────────────────────────────────────────
+// Exercise IDs reference DEFAULT_EXERCISES (1–6). When applying a template,
+// the screen filters out IDs not present in the user's exercise list.
+export const ROUTINE_TEMPLATES: RoutineTemplate[] = [
+  {
+    id: 'ppl-push',
+    name: 'PPL — Push',
+    emoji: '💪',
+    desc: 'Día de empuje: pecho y hombros. Progresión lineal por sesión.',
+    days: 'Lun / Jue',
+    duration: '45',
+    exercises: [
+      { exId: 1, sets: 4, reps: '8', weight: '80 kg', rest: 90 },
+      { exId: 3, sets: 3, reps: '10', weight: '50 kg', rest: 60 },
+    ],
+  },
+  {
+    id: 'ppl-pull',
+    name: 'PPL — Pull',
+    emoji: '🔙',
+    desc: 'Día de jalón: espalda y bíceps. Foco en retracción escapular.',
+    days: 'Mar / Vie',
+    duration: '40',
+    exercises: [
+      { exId: 2, sets: 4, reps: '8', weight: '70 kg', rest: 90 },
+      { exId: 4, sets: 3, reps: '12', weight: '20 kg', rest: 60 },
+    ],
+  },
+  {
+    id: 'ppl-legs',
+    name: 'PPL — Legs',
+    emoji: '🦵',
+    desc: 'Día de piernas y core. El más importante del PPL.',
+    days: 'Mié / Sáb',
+    duration: '50',
+    exercises: [
+      { exId: 5, sets: 5, reps: '5', weight: '100 kg', rest: 180 },
+      { exId: 6, sets: 3, reps: '45s', weight: '—', rest: 30 },
+    ],
+  },
+  {
+    id: '5x5-a',
+    name: '5×5 — Día A',
+    emoji: '⚡',
+    desc: 'Stronglifts 5×5. Tres ejercicios compuestos, máxima fuerza.',
+    days: 'Lun / Mié / Vie',
+    duration: '45',
+    exercises: [
+      { exId: 5, sets: 5, reps: '5', weight: '100 kg', rest: 180 },
+      { exId: 1, sets: 5, reps: '5', weight: '80 kg', rest: 180 },
+      { exId: 2, sets: 5, reps: '5', weight: '70 kg', rest: 180 },
+    ],
+  },
+  {
+    id: '5x5-b',
+    name: '5×5 — Día B',
+    emoji: '⚡',
+    desc: 'Stronglifts 5×5 variante. Alternas con Día A cada sesión.',
+    days: 'Lun / Mié / Vie',
+    duration: '45',
+    exercises: [
+      { exId: 5, sets: 5, reps: '5', weight: '100 kg', rest: 180 },
+      { exId: 3, sets: 5, reps: '5', weight: '50 kg', rest: 180 },
+      { exId: 4, sets: 3, reps: '8', weight: '20 kg', rest: 60 },
+    ],
+  },
+  {
+    id: 'upper',
+    name: 'Upper/Lower — Upper',
+    emoji: '🙌',
+    desc: 'Tren superior completo: pecho, espalda, hombros y brazos.',
+    days: 'Lun / Jue',
+    duration: '55',
+    exercises: [
+      { exId: 1, sets: 4, reps: '8', weight: '80 kg', rest: 90 },
+      { exId: 2, sets: 4, reps: '8', weight: '70 kg', rest: 90 },
+      { exId: 3, sets: 3, reps: '10', weight: '50 kg', rest: 60 },
+      { exId: 4, sets: 3, reps: '12', weight: '20 kg', rest: 60 },
+    ],
+  },
+  {
+    id: 'lower',
+    name: 'Upper/Lower — Lower',
+    emoji: '🦵',
+    desc: 'Tren inferior: cuadriceps, core y estabilidad.',
+    days: 'Mar / Vie',
+    duration: '40',
+    exercises: [
+      { exId: 5, sets: 5, reps: '5', weight: '100 kg', rest: 180 },
+      { exId: 6, sets: 3, reps: '45s', weight: '—', rest: 30 },
     ],
   },
 ];

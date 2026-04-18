@@ -1,15 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Vibration } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { C, radius, font } from '../data/theme';
+import { radius, font } from '../data/theme';
+import { useColors } from '../contexts/ThemeContext';
 import { ProgressBar, VueltaDots, TimerRing, Btn, SetCircle } from '../components/UI';
 import { useTimer, useCountdown } from '../hooks/useTimer';
-import { REHAB_DATA } from '../data/data';
+import { useRehabContext } from '../contexts/RehabContext';
 
 export default function RehabActiveScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { bloqueIdx: startBloque } = useLocalSearchParams<{ bloqueIdx: string }>();
+  const { bloques } = useRehabContext();
   const clock = useTimer(true);
   const countdown = useCountdown(30);
 
@@ -54,15 +58,12 @@ export default function RehabActiveScreen() {
   }
 
   function completeEx() {
-    const bloque = REHAB_DATA[bloqueIdx];
+    const bloque = bloques[bloqueIdx];
     const nextExIdx = exIdx + 1;
 
     if (nextExIdx >= bloque.exercises.length) {
-      // vuelta completa
       const nextVuelta = vueltaIdx + 1;
       if (nextVuelta < bloque.vueltas) {
-        // hay más vueltas
-        const nextBloqueData = REHAB_DATA[bloqueIdx];
         startPause(60,
           `Vuelta ${nextVuelta} completada ✓`,
           'Descansá antes de la próxima vuelta',
@@ -70,17 +71,15 @@ export default function RehabActiveScreen() {
           () => { setExIdx(0); setVueltaIdx(nextVuelta); }
         );
       } else {
-        // bloque completo
         const nextBloqueIdx = bloqueIdx + 1;
-        if (nextBloqueIdx >= REHAB_DATA.length) {
-          // rehab completa!
+        if (nextBloqueIdx >= bloques.length) {
           clock.stop();
           router.replace({ pathname: '/rehab-finish', params: { time: clock.fmt } });
         } else {
           startPause(90,
             `Bloque ${bloqueIdx + 1} completado ✓`,
             'Descansá antes del siguiente bloque',
-            `Bloque ${nextBloqueIdx + 1}: ${REHAB_DATA[nextBloqueIdx].name}`,
+            `Bloque ${nextBloqueIdx + 1}: ${bloques[nextBloqueIdx].name}`,
             () => { setBloqueIdx(nextBloqueIdx); setExIdx(0); setVueltaIdx(0); }
           );
         }
@@ -92,24 +91,39 @@ export default function RehabActiveScreen() {
   }
 
   function skipEx() {
-    const bloque = REHAB_DATA[bloqueIdx];
+    const bloque = bloques[bloqueIdx];
     const nextExIdx = exIdx + 1;
     if (nextExIdx >= bloque.exercises.length) {
       const nextBloqueIdx = bloqueIdx + 1;
-      if (nextBloqueIdx >= REHAB_DATA.length) { clock.stop(); router.replace('/rehab-finish'); return; }
+      if (nextBloqueIdx >= bloques.length) { clock.stop(); router.replace('/rehab-finish'); return; }
       setBloqueIdx(nextBloqueIdx); setExIdx(0); setVueltaIdx(0);
     } else {
       setExIdx(nextExIdx);
     }
   }
 
-  const bloque = REHAB_DATA[bloqueIdx];
+  if (!bloques.length || !bloques[bloqueIdx]) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.closeBtn}>
+            <Text style={styles.closeText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+        <View style={{ alignItems: 'center', padding: 40 }}>
+          <Text style={{ color: C.text2, fontSize: font.md }}>No hay bloques de rehab.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  const bloque = bloques[bloqueIdx];
   const ex = bloque.exercises[exIdx];
-  const totalEx = REHAB_DATA.reduce((a, b) => a + b.exercises.length, 0);
-  const doneEx = REHAB_DATA.slice(0, bloqueIdx).reduce((a, b) => a + b.exercises.length, 0) + exIdx;
-  const pct = Math.round((doneEx / totalEx) * 100);
+  const totalEx = bloques.reduce((a, b) => a + b.exercises.length, 0);
+  const doneEx = bloques.slice(0, bloqueIdx).reduce((a, b) => a + b.exercises.length, 0) + exIdx;
+  const pct = totalEx > 0 ? Math.round((doneEx / totalEx) * 100) : 0;
   const nextEx = bloque.exercises[exIdx + 1];
-  const nextBloque = REHAB_DATA[bloqueIdx + 1];
+  const nextBloque = bloques[bloqueIdx + 1];
 
   return (
     <View style={styles.container}>
@@ -148,7 +162,6 @@ export default function RehabActiveScreen() {
               </View>
             </View>
 
-            {/* Vuelta tracker */}
             {bloque.vueltas > 1 && (
               <View style={styles.tracker}>
                 <Text style={styles.trackerHdr}>Vueltas del bloque</Text>
@@ -166,7 +179,6 @@ export default function RehabActiveScreen() {
               </View>
             )}
 
-            {/* Next */}
             {(nextEx || nextBloque) && (
               <View style={styles.nextCard}>
                 <Text style={{ fontSize: 26 }}>{nextEx ? nextEx.emoji : '➡️'}</Text>
@@ -215,36 +227,38 @@ export default function RehabActiveScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  closeText: { color: C.text, fontSize: 16 },
-  subtitle: { flex: 1, fontSize: font.xs, color: C.text2 },
-  clockText: { fontSize: font.md, color: C.acc, fontWeight: '700' },
-  progInfo: { fontSize: font.xs, color: C.text3, paddingHorizontal: 16, paddingVertical: 2 },
-  scroll: { flex: 1, paddingHorizontal: 16 },
-  hero: { backgroundColor: C.s1, borderRadius: radius.lg, padding: 16, marginTop: 8, marginBottom: 10 },
-  bloqueLabel: { fontSize: font.xs, color: C.acc, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
-  exName: { fontSize: 20, fontWeight: '800', color: C.text, textAlign: 'center', marginBottom: 4 },
-  exReps: { fontSize: font.md, color: C.text2, textAlign: 'center', marginBottom: 10 },
-  exDesc: { fontSize: font.sm, color: C.text2, lineHeight: 20, textAlign: 'center', marginBottom: 8 },
-  tip: { backgroundColor: 'rgba(232,255,71,0.08)', borderRadius: 8, padding: 9, marginBottom: 10 },
-  tipText: { fontSize: font.sm, color: C.acc, textAlign: 'center' },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  mainBtn: { flex: 1, backgroundColor: C.acc, borderRadius: radius.sm, paddingVertical: 13, alignItems: 'center' },
-  mainBtnText: { fontSize: font.md, fontWeight: '800', color: '#0f0f0f' },
-  skipBtn: { backgroundColor: C.s2, borderRadius: radius.sm, paddingHorizontal: 16, paddingVertical: 13, alignItems: 'center' },
-  skipText: { fontSize: font.md, color: C.text2, fontWeight: '600' },
-  tracker: { backgroundColor: C.s1, borderRadius: radius.lg, marginBottom: 10, overflow: 'hidden' },
-  trackerHdr: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6, fontSize: font.xs, color: C.text2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  setRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: C.s2 },
-  setLabel: { fontSize: font.xs, color: C.text2 },
-  setDetail: { fontSize: font.sm, color: C.text, fontWeight: '600' },
-  nextCard: { backgroundColor: C.s2, borderRadius: radius.sm, padding: 12, flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  nextLbl: { fontSize: 10, color: C.text2, letterSpacing: 1, fontWeight: '700' },
-  nextName: { fontSize: font.md, fontWeight: '600', color: C.text, marginTop: 2 },
-  pauseContainer: { alignItems: 'center', paddingVertical: 10 },
-  pauseTitle: { fontSize: font.lg, color: C.acc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  pauseSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
-});
+function createStyles(C: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
+    closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+    closeText: { color: C.text, fontSize: 16 },
+    subtitle: { flex: 1, fontSize: font.xs, color: C.text2 },
+    clockText: { fontSize: font.md, color: C.acc, fontWeight: '700' },
+    progInfo: { fontSize: font.xs, color: C.text3, paddingHorizontal: 16, paddingVertical: 2 },
+    scroll: { flex: 1, paddingHorizontal: 16 },
+    hero: { backgroundColor: C.s1, borderRadius: radius.lg, padding: 16, marginTop: 8, marginBottom: 10 },
+    bloqueLabel: { fontSize: font.xs, color: C.acc, textTransform: 'uppercase', letterSpacing: 1, fontWeight: '700', textAlign: 'center', marginBottom: 4 },
+    exName: { fontSize: 20, fontWeight: '800', color: C.text, textAlign: 'center', marginBottom: 4 },
+    exReps: { fontSize: font.md, color: C.text2, textAlign: 'center', marginBottom: 10 },
+    exDesc: { fontSize: font.sm, color: C.text2, lineHeight: 20, textAlign: 'center', marginBottom: 8 },
+    tip: { backgroundColor: 'rgba(232,255,71,0.08)', borderRadius: 8, padding: 9, marginBottom: 10 },
+    tipText: { fontSize: font.sm, color: C.acc, textAlign: 'center' },
+    actions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    mainBtn: { flex: 1, backgroundColor: C.acc, borderRadius: radius.sm, paddingVertical: 13, alignItems: 'center' },
+    mainBtnText: { fontSize: font.md, fontWeight: '800', color: '#0f0f0f' },
+    skipBtn: { backgroundColor: C.s2, borderRadius: radius.sm, paddingHorizontal: 16, paddingVertical: 13, alignItems: 'center' },
+    skipText: { fontSize: font.md, color: C.text2, fontWeight: '600' },
+    tracker: { backgroundColor: C.s1, borderRadius: radius.lg, marginBottom: 10, overflow: 'hidden' },
+    trackerHdr: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6, fontSize: font.xs, color: C.text2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+    setRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: C.s2 },
+    setLabel: { fontSize: font.xs, color: C.text2 },
+    setDetail: { fontSize: font.sm, color: C.text, fontWeight: '600' },
+    nextCard: { backgroundColor: C.s2, borderRadius: radius.sm, padding: 12, flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    nextLbl: { fontSize: 10, color: C.text2, letterSpacing: 1, fontWeight: '700' },
+    nextName: { fontSize: font.md, fontWeight: '600', color: C.text, marginTop: 2 },
+    pauseContainer: { alignItems: 'center', paddingVertical: 10 },
+    pauseTitle: { fontSize: font.lg, color: C.acc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+    pauseSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
+  });
+}

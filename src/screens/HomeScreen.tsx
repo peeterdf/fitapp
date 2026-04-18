@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { C, radius, font } from '../data/theme';
+import { radius, font } from '../data/theme';
+import { useColors } from '../contexts/ThemeContext';
 import { SectionTitle, Loading } from '../components/UI';
 import { useRoutinesContext } from '../contexts/RoutinesContext';
 import { useExercisesContext } from '../contexts/ExercisesContext';
+import { useRehabContext } from '../contexts/RehabContext';
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -12,7 +14,6 @@ function todayName(): string {
   return DAYS[new Date().getDay()];
 }
 
-/** Strip diacritics and lowercase so "Mié", "mie", "Miércoles" all match. */
 function normalize(s: string): string {
   return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 }
@@ -25,8 +26,11 @@ function matchesToday(days: string): boolean {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { routines, loading: rLoading } = useRoutinesContext();
   const { exercises, loading: eLoading } = useExercisesContext();
+  const { bloques } = useRehabContext();
 
   const today = todayName();
   const quickRoutine = useMemo(
@@ -93,17 +97,17 @@ export default function HomeScreen() {
 
         <SectionTitle label="Accesos rápidos" />
         <View style={styles.shortcutsGrid}>
-          <Shortcut emoji="🏋️" label="Ejercicios" sub={`${exercises.length}`} onPress={() => router.push('/(tabs)/exercises')} />
-          <Shortcut emoji="📋" label="Rutinas" sub={`${routines.length}`} onPress={() => router.push('/(tabs)/routines')} />
-          <Shortcut emoji="🩹" label="Rehab" sub="3 bloques" onPress={() => router.push('/(tabs)/rehab')} />
-          <Shortcut emoji="⚙️" label="Ajustes" sub="Importar" onPress={() => router.push('/settings' as any)} />
+          <Shortcut C={C} styles={styles} emoji="🏋️" label="Ejercicios" sub={`${exercises.length}`} onPress={() => router.push('/(tabs)/exercises')} />
+          <Shortcut C={C} styles={styles} emoji="📋" label="Rutinas" sub={`${routines.length}`} onPress={() => router.push('/(tabs)/routines')} />
+          <Shortcut C={C} styles={styles} emoji="🩹" label="Rehab" sub={`${bloques.length} bloques`} onPress={() => router.push('/(tabs)/rehab')} />
+          <Shortcut C={C} styles={styles} emoji="⚙️" label="Ajustes" sub="Importar" onPress={() => router.push('/settings' as any)} />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function Shortcut({ emoji, label, sub, onPress }: { emoji: string; label: string; sub: string; onPress: () => void }) {
+function Shortcut({ C, styles, emoji, label, sub, onPress }: { C: ReturnType<typeof useColors>; styles: any; emoji: string; label: string; sub: string; onPress: () => void }) {
   return (
     <TouchableOpacity style={styles.shortcut} onPress={onPress} activeOpacity={0.8}>
       <Text style={styles.shortcutEmoji}>{emoji}</Text>
@@ -113,45 +117,47 @@ function Shortcut({ emoji, label, sub, onPress }: { emoji: string; label: string
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  greeting: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  settingsBtn: { padding: 8, marginRight: -8 },
-  settingsIcon: { fontSize: 24 },
-  hey: { fontSize: font.md, color: C.text2 },
-  title: { fontSize: font.xxxl, fontWeight: '900', color: C.text, letterSpacing: -1 },
-  scroll: { flex: 1, paddingHorizontal: 16, marginTop: 4 },
+function createStyles(C: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    greeting: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    settingsBtn: { padding: 8, marginRight: -8 },
+    settingsIcon: { fontSize: 24 },
+    hey: { fontSize: font.md, color: C.text2 },
+    title: { fontSize: font.xxxl, fontWeight: '900', color: C.text, letterSpacing: -1 },
+    scroll: { flex: 1, paddingHorizontal: 16, marginTop: 4 },
 
-  quickStart: {
-    marginTop: 12, backgroundColor: C.acc,
-    borderRadius: radius.lg, padding: 18,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-  },
-  qsLabel: { fontSize: font.xs, fontWeight: '700', color: '#0f0f0f', opacity: 0.65, marginBottom: 2, letterSpacing: 1 },
-  qsName: { fontSize: font.xl, fontWeight: '900', color: '#0f0f0f', letterSpacing: -0.3 },
-  qsMeta: { fontSize: font.sm, color: '#0f0f0f', opacity: 0.7, marginTop: 2 },
-  qsPlay: { fontSize: 24, color: '#0f0f0f', marginLeft: 10 },
+    quickStart: {
+      marginTop: 12, backgroundColor: C.acc,
+      borderRadius: radius.lg, padding: 18,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    },
+    qsLabel: { fontSize: font.xs, fontWeight: '700', color: C.black, opacity: 0.65, marginBottom: 2, letterSpacing: 1 },
+    qsName: { fontSize: font.xl, fontWeight: '900', color: C.black, letterSpacing: -0.3 },
+    qsMeta: { fontSize: font.sm, color: C.black, opacity: 0.7, marginTop: 2 },
+    qsPlay: { fontSize: 24, color: C.black, marginLeft: 10 },
 
-  emptyQuick: {
-    marginTop: 12, backgroundColor: C.s1, borderRadius: radius.lg,
-    padding: 20, alignItems: 'center', borderWidth: 1.5, borderColor: C.s2, borderStyle: 'dashed',
-  },
-  emptyQuickTitle: { color: C.text, fontSize: font.lg, fontWeight: '700' },
-  emptyQuickSub: { color: C.text2, fontSize: font.sm, marginTop: 4 },
+    emptyQuick: {
+      marginTop: 12, backgroundColor: C.s1, borderRadius: radius.lg,
+      padding: 20, alignItems: 'center', borderWidth: 1.5, borderColor: C.s2, borderStyle: 'dashed',
+    },
+    emptyQuickTitle: { color: C.text, fontSize: font.lg, fontWeight: '700' },
+    emptyQuickSub: { color: C.text2, fontSize: font.sm, marginTop: 4 },
 
-  statsRow: { flexDirection: 'row', gap: 8 },
-  statBox: { flex: 1, backgroundColor: C.s1, borderRadius: radius.md, padding: 14, alignItems: 'center' },
-  statVal: { fontSize: 22, fontWeight: '900', color: C.acc },
-  statLbl: { fontSize: font.xs, color: C.text2, marginTop: 2 },
-  statsHint: { fontSize: font.xs, color: C.text3, marginTop: 6, fontStyle: 'italic' },
+    statsRow: { flexDirection: 'row', gap: 8 },
+    statBox: { flex: 1, backgroundColor: C.s1, borderRadius: radius.md, padding: 14, alignItems: 'center' },
+    statVal: { fontSize: 22, fontWeight: '900', color: C.acc },
+    statLbl: { fontSize: font.xs, color: C.text2, marginTop: 2 },
+    statsHint: { fontSize: font.xs, color: C.text3, marginTop: 6, fontStyle: 'italic' },
 
-  shortcutsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  shortcut: {
-    width: '48%', backgroundColor: C.s1, borderRadius: radius.md,
-    padding: 14, alignItems: 'flex-start',
-  },
-  shortcutEmoji: { fontSize: 28, marginBottom: 6 },
-  shortcutLabel: { fontSize: font.md, fontWeight: '800', color: C.text },
-  shortcutSub: { fontSize: font.xs, color: C.text2, marginTop: 2 },
-});
+    shortcutsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    shortcut: {
+      width: '48%', backgroundColor: C.s1, borderRadius: radius.md,
+      padding: 14, alignItems: 'flex-start',
+    },
+    shortcutEmoji: { fontSize: 28, marginBottom: 6 },
+    shortcutLabel: { fontSize: font.md, fontWeight: '800', color: C.text },
+    shortcutSub: { fontSize: font.xs, color: C.text2, marginTop: 2 },
+  });
+}

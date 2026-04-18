@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { C, radius, font } from '../data/theme';
+import { radius, font } from '../data/theme';
+import { useColors } from '../contexts/ThemeContext';
 import { Btn } from '../components/UI';
 
 const DAYS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -10,6 +11,8 @@ const TODAY = 3;
 
 export default function WorkoutFinishScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { time, exCount, sets } = useLocalSearchParams<{ time: string; exCount: string; sets: string }>();
 
   return (
@@ -38,7 +41,6 @@ export default function WorkoutFinishScreen() {
           </View>
         </View>
 
-        {/* Weekly streak */}
         <View style={styles.rachaBox}>
           <Text style={styles.rachaTitle}>RACHA SEMANAL</Text>
           <View style={styles.rachaDots}>
@@ -49,7 +51,7 @@ export default function WorkoutFinishScreen() {
                   DONE[i] && { backgroundColor: C.acc },
                   i === TODAY && !DONE[i] && { borderWidth: 2, borderColor: C.acc },
                 ]}>
-                  {DONE[i] && <Text style={{ fontSize: 12, color: '#0f0f0f' }}>✓</Text>}
+                  {DONE[i] && <Text style={{ fontSize: 12, color: C.black }}>✓</Text>}
                 </View>
                 <Text style={[styles.rdLbl, i === TODAY && { color: C.acc, fontWeight: '700' }]}>{d}</Text>
               </View>
@@ -64,20 +66,22 @@ export default function WorkoutFinishScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  content: { alignItems: 'center', padding: 24 },
-  emoji: { fontSize: 56, marginBottom: 10 },
-  title: { fontSize: 26, fontWeight: '900', color: C.text, letterSpacing: -1, textAlign: 'center', marginBottom: 4 },
-  sub: { fontSize: font.md, color: C.text2, marginBottom: 20 },
-  grid: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 10, width: '100%', marginBottom: 18 },
-  statCard: { flex: 1, minWidth: '45%', backgroundColor: C.s1, borderRadius: radius.sm, padding: 14, alignItems: 'center' },
-  statVal: { fontSize: 26, fontWeight: '900', color: C.acc },
-  statLbl: { fontSize: font.xs, color: C.text2, marginTop: 2 },
-  rachaBox: { backgroundColor: C.s1, borderRadius: radius.sm, padding: 14, width: '100%', marginBottom: 18 },
-  rachaTitle: { fontSize: font.xs, fontWeight: '700', color: C.text2, letterSpacing: 1, marginBottom: 12 },
-  rachaDots: { flexDirection: 'row', justifyContent: 'space-around' },
-  rdItem: { alignItems: 'center', gap: 4 },
-  rdCircle: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center' },
-  rdLbl: { fontSize: 9, color: C.text3 },
-});
+function createStyles(C: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    content: { alignItems: 'center', padding: 24 },
+    emoji: { fontSize: 56, marginBottom: 10 },
+    title: { fontSize: 26, fontWeight: '900', color: C.text, letterSpacing: -1, textAlign: 'center', marginBottom: 4 },
+    sub: { fontSize: font.md, color: C.text2, marginBottom: 20 },
+    grid: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 10, width: '100%', marginBottom: 18 },
+    statCard: { flex: 1, minWidth: '45%', backgroundColor: C.s1, borderRadius: radius.sm, padding: 14, alignItems: 'center' },
+    statVal: { fontSize: 26, fontWeight: '900', color: C.acc },
+    statLbl: { fontSize: font.xs, color: C.text2, marginTop: 2 },
+    rachaBox: { backgroundColor: C.s1, borderRadius: radius.sm, padding: 14, width: '100%', marginBottom: 18 },
+    rachaTitle: { fontSize: font.xs, fontWeight: '700', color: C.text2, letterSpacing: 1, marginBottom: 12 },
+    rachaDots: { flexDirection: 'row', justifyContent: 'space-around' },
+    rdItem: { alignItems: 'center', gap: 4 },
+    rdCircle: { width: 30, height: 30, borderRadius: 15, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center' },
+    rdLbl: { fontSize: 9, color: C.text3 },
+  });
+}

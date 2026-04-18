@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
-import { C, radius, font } from '../data/theme';
+import { radius, font } from '../data/theme';
+import { useColors } from '../contexts/ThemeContext';
 import { Tag, Badge, Loading } from '../components/UI';
 import { MediaThumbnail } from '../components/MediaThumbnail';
 import { useExercisesContext } from '../contexts/ExercisesContext';
 import { MUSCLE_EMOJIS } from '../data/data';
-import { MuscleGroup } from '../data/types';
 import { getYouTubeId } from '../data/utils';
 
 const FILTERS: string[] = ['Todos', 'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core / Abdomen'];
 
 export default function ExercisesScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { exercises, loading } = useExercisesContext();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('Todos');
@@ -31,7 +33,6 @@ export default function ExercisesScreen() {
         <Text style={styles.title}>Ejercicios</Text>
       </View>
 
-      {/* Search */}
       <View style={styles.searchWrap}>
         <TextInput
           style={styles.search}
@@ -43,7 +44,6 @@ export default function ExercisesScreen() {
         />
       </View>
 
-      {/* Filters */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
         {FILTERS.map(f => (
           <TouchableOpacity
@@ -56,7 +56,6 @@ export default function ExercisesScreen() {
         ))}
       </ScrollView>
 
-      {/* List */}
       <FlatList
         data={filtered}
         keyExtractor={ex => String(ex.id)}
@@ -105,7 +104,6 @@ export default function ExercisesScreen() {
         }
       />
 
-      {/* FAB */}
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/new-exercise')}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -113,30 +111,32 @@ export default function ExercisesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
-  searchWrap: { marginHorizontal: 16, marginBottom: 10 },
-  search: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, fontSize: font.md, color: C.text },
-  filterScroll: { flexGrow: 0, marginBottom: 10 },
-  chip: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1.5, borderColor: 'transparent' },
-  chipOn: { backgroundColor: 'rgba(232,255,71,0.12)', borderColor: 'rgba(232,255,71,0.3)' },
-  chipText: { fontSize: font.sm, color: C.text2 },
-  chipTextOn: { color: C.acc, fontWeight: '700' },
-  card: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
-  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  cardInfo: { flex: 1 },
-  cardTitle: { fontSize: 15, fontWeight: '700', color: C.text },
-  cardSub: { fontSize: font.sm, color: C.text2, marginTop: 2 },
-  mediaBadge: { backgroundColor: 'rgba(232,255,71,0.12)', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2 },
-  mediaBadgeText: { fontSize: 12 },
-  empty: { alignItems: 'center', marginTop: 60 },
-  fab: {
-    position: 'absolute', bottom: 86, right: 16,
-    width: 54, height: 54, borderRadius: 27,
-    backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center',
-    elevation: 8,
-  },
-  fabText: { fontSize: 28, fontWeight: '900', color: '#0f0f0f' },
-});
+function createStyles(C: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+    title: { fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
+    searchWrap: { marginHorizontal: 16, marginBottom: 10 },
+    search: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, fontSize: font.md, color: C.text },
+    filterScroll: { flexGrow: 0, marginBottom: 10 },
+    chip: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1.5, borderColor: 'transparent' },
+    chipOn: { backgroundColor: 'rgba(232,255,71,0.12)', borderColor: 'rgba(232,255,71,0.3)' },
+    chipText: { fontSize: font.sm, color: C.text2 },
+    chipTextOn: { color: C.acc, fontWeight: '700' },
+    card: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
+    cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    cardInfo: { flex: 1 },
+    cardTitle: { fontSize: 15, fontWeight: '700', color: C.text },
+    cardSub: { fontSize: font.sm, color: C.text2, marginTop: 2 },
+    mediaBadge: { backgroundColor: 'rgba(232,255,71,0.12)', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2 },
+    mediaBadgeText: { fontSize: 12 },
+    empty: { alignItems: 'center', marginTop: 60 },
+    fab: {
+      position: 'absolute', bottom: 86, right: 16,
+      width: 54, height: 54, borderRadius: 27,
+      backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center',
+      elevation: 8,
+    },
+    fabText: { fontSize: 28, fontWeight: '900', color: C.black },
+  });
+}

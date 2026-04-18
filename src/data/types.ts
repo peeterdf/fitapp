@@ -36,6 +36,7 @@ export interface RoutineExercise {
   reps: string;
   weight: string;
   rest: number;
+  isSuperset?: boolean; // if true, no rest before the next exercise (paired as A+B)
 }
 
 export interface Routine {

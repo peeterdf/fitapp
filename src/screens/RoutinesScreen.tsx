@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { C, radius, font } from '../data/theme';
-import { Badge, Tag, Loading } from '../components/UI';
+import { radius, font } from '../data/theme';
+import { useColors } from '../contexts/ThemeContext';
+import { Tag, Loading } from '../components/UI';
 import { useRoutinesContext } from '../contexts/RoutinesContext';
 import { useExercisesContext } from '../contexts/ExercisesContext';
 import { MUSCLE_EMOJIS } from '../data/data';
 
 export default function RoutinesScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { routines, loading } = useRoutinesContext();
   const { exercises } = useExercisesContext();
 
@@ -75,26 +78,28 @@ export default function RoutinesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
-  title: { fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
-  subtitle: { fontSize: font.sm, color: C.text2, marginTop: 2 },
-  scroll: { flex: 1, paddingHorizontal: 16 },
-  card: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
-  cardRow: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { fontSize: font.lg, fontWeight: '800', color: C.text, letterSpacing: -0.3 },
-  cardSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
-  arrow: { color: C.text3, fontSize: 26, marginLeft: 8 },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
-  empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 24 },
-  emptyTitle: { color: C.text, fontSize: font.lg, fontWeight: '700', marginBottom: 4 },
-  emptySub: { color: C.text2, fontSize: font.md, textAlign: 'center' },
-  fab: {
-    position: 'absolute', bottom: 86, right: 16,
-    width: 54, height: 54, borderRadius: 27,
-    backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center',
-    shadowColor: C.acc, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
-  },
-  fabText: { fontSize: 28, fontWeight: '900', color: '#0f0f0f' },
-});
+function createStyles(C: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+    title: { fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
+    subtitle: { fontSize: font.sm, color: C.text2, marginTop: 2 },
+    scroll: { flex: 1, paddingHorizontal: 16 },
+    card: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
+    cardRow: { flexDirection: 'row', alignItems: 'center' },
+    cardTitle: { fontSize: font.lg, fontWeight: '800', color: C.text, letterSpacing: -0.3 },
+    cardSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
+    arrow: { color: C.text3, fontSize: 26, marginLeft: 8 },
+    tags: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
+    empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 24 },
+    emptyTitle: { color: C.text, fontSize: font.lg, fontWeight: '700', marginBottom: 4 },
+    emptySub: { color: C.text2, fontSize: font.md, textAlign: 'center' },
+    fab: {
+      position: 'absolute', bottom: 86, right: 16,
+      width: 54, height: 54, borderRadius: 27,
+      backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center',
+      shadowColor: C.acc, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
+    },
+    fabText: { fontSize: 28, fontWeight: '900', color: C.black },
+  });
+}

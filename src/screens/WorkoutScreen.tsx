@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Vibration } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { C, radius, font } from '../data/theme';
+import { radius, font } from '../data/theme';
+import { useColors } from '../contexts/ThemeContext';
+import { useWorkoutTimer } from '../contexts/WorkoutTimerContext';
 import { ProgressBar, SetCircle, TimerRing, Btn } from '../components/UI';
 import { MediaThumbnail } from '../components/MediaThumbnail';
 import { useExercisesContext } from '../contexts/ExercisesContext';
@@ -18,13 +20,17 @@ interface WorkoutItem extends Exercise {
   wWeight: string;
   wRest: number;
   currentSet: number;
+  isSuperset: boolean;
 }
 
 export default function WorkoutScreen() {
   const router = useRouter();
+  const C = useColors();
+  const styles = useMemo(() => createStyles(C), [C]);
   const { singleExId, routineId } = useLocalSearchParams<{ singleExId?: string; routineId?: string }>();
   const { exercises } = useExercisesContext();
   const { routines } = useRoutinesContext();
+  const { startWorkout, stopWorkout } = useWorkoutTimer();
   const clock = useTimer(true);
   const countdown = useCountdown(60);
 
@@ -37,7 +43,11 @@ export default function WorkoutScreen() {
 
   useEffect(() => {
     activateKeepAwakeAsync();
-    return () => { deactivateKeepAwake(); };
+    startWorkout();
+    return () => {
+      deactivateKeepAwake();
+      stopWorkout();
+    };
   }, []);
 
   useEffect(() => {
@@ -46,7 +56,7 @@ export default function WorkoutScreen() {
     if (singleExId) {
       const ex = exercises.find(e => e.id === Number(singleExId));
       if (!ex) return;
-      list = [{ ...ex, wSets: ex.sets, wReps: ex.reps, wWeight: ex.weight + ' kg', wRest: ex.rest, currentSet: 1 }];
+      list = [{ ...ex, wSets: ex.sets, wReps: ex.reps, wWeight: ex.weight + ' kg', wRest: ex.rest, currentSet: 1, isSuperset: false }];
     } else {
       const routine = routineId
         ? routines.find(r => r.id === Number(routineId))
@@ -55,7 +65,7 @@ export default function WorkoutScreen() {
       list = source.map(item => {
         const ex = exercises.find(e => e.id === item.exId);
         if (!ex) return null;
-        return { ...ex, wSets: item.sets, wReps: item.reps, wWeight: item.weight, wRest: item.rest, currentSet: 1 };
+        return { ...ex, wSets: item.sets, wReps: item.reps, wWeight: item.weight, wRest: item.rest, currentSet: 1, isSuperset: !!item.isSuperset };
       }).filter(Boolean) as WorkoutItem[];
     }
     if (!list.length) {
@@ -76,7 +86,6 @@ export default function WorkoutScreen() {
     setMode('pause');
     Vibration.vibrate(200);
     countdown.start(secs);
-    // store callback
     cbRef.current = cb;
   }, []);
 
@@ -97,6 +106,12 @@ export default function WorkoutScreen() {
     if (cbRef.current) { cbRef.current(); cbRef.current = null; }
   }
 
+  function finishWorkout(newDone: number, itemCount: number) {
+    clock.stop();
+    stopWorkout();
+    router.replace({ pathname: '/workout-finish', params: { time: clock.fmt, exCount: itemCount, sets: newDone } });
+  }
+
   function completeSet() {
     const ex = items[idx];
     const newDone = doneSets + 1;
@@ -108,12 +123,13 @@ export default function WorkoutScreen() {
     setItems(updatedItems);
 
     if (ex.currentSet >= ex.wSets) {
-      // exercise done
       const nextIdx = idx + 1;
       if (nextIdx >= items.length) {
-        // workout done
-        clock.stop();
-        router.replace({ pathname: '/workout-finish', params: { time: clock.fmt, exCount: items.length, sets: newDone } });
+        finishWorkout(newDone, items.length);
+      } else if (ex.isSuperset) {
+        // Superset: go directly to next exercise without rest
+        Vibration.vibrate(200);
+        setIdx(nextIdx);
       } else {
         startPause(ex.wRest, () => setIdx(nextIdx));
       }
@@ -134,7 +150,7 @@ export default function WorkoutScreen() {
       <View style={styles.header}>
         <TouchableOpacity onPress={() => Alert.alert('Terminar', '¿Querés terminar el entrenamiento?', [
           { text: 'No' },
-          { text: 'Sí', style: 'destructive', onPress: () => { clock.stop(); router.back(); } },
+          { text: 'Sí', style: 'destructive', onPress: () => { clock.stop(); stopWorkout(); router.back(); } },
         ])} style={styles.closeBtn}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
@@ -149,15 +165,18 @@ export default function WorkoutScreen() {
         {mode === 'exercise' ? (
           <>
             {/* Exercise hero */}
-            <View style={styles.hero}>
+            <View style={[styles.hero, ex.isSuperset && { borderLeftWidth: 3, borderLeftColor: C.acc2 }]}>
+              {ex.isSuperset && (
+                <View style={{ backgroundColor: 'rgba(71,255,180,0.1)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'center', marginBottom: 6 }}>
+                  <Text style={{ color: C.acc2, fontSize: font.xs, fontWeight: '700' }}>⚡ SUPERSERIE — sin pausa con el siguiente</Text>
+                </View>
+              )}
               <Text style={styles.heroName}>{ex.name}</Text>
               <Text style={styles.heroInfo}>{ex.wWeight} · Serie {ex.currentSet} de {ex.wSets}</Text>
 
-              {/* Media button */}
               {(ex.youtube || ex.imageUri) && (
                 <MediaThumbnail youtube={ex.youtube} imageUri={ex.imageUri} fallbackEmoji="" compact={false} />
               )}
-
               {!ex.youtube && !ex.imageUri && (
                 <Text style={{ fontSize: 56, textAlign: 'center', marginVertical: 10 }}>
                   {MUSCLE_EMOJIS[ex.muscle] || '💪'}
@@ -170,7 +189,7 @@ export default function WorkoutScreen() {
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => {
                   const nextIdx = idx + 1;
-                  if (nextIdx >= items.length) { clock.stop(); router.replace('/workout-finish'); }
+                  if (nextIdx >= items.length) { clock.stop(); stopWorkout(); router.replace('/workout-finish'); }
                   else setIdx(nextIdx);
                 }} style={styles.skipBtn}>
                   <Text style={styles.skipText}>Saltar ▶</Text>
@@ -210,7 +229,7 @@ export default function WorkoutScreen() {
               <View style={styles.nextCard}>
                 <Text style={{ fontSize: 28 }}>{MUSCLE_EMOJIS[next.muscle] || '💪'}</Text>
                 <View style={{ marginLeft: 12 }}>
-                  <Text style={styles.nextLbl}>SIGUIENTE EJERCICIO</Text>
+                  <Text style={styles.nextLbl}>{ex.isSuperset ? '⚡ SUPERSERIE — SIN PAUSA' : 'SIGUIENTE EJERCICIO'}</Text>
                   <Text style={styles.nextName}>{next.name} — {next.wSets}×{next.wReps}</Text>
                 </View>
               </View>
@@ -244,7 +263,7 @@ export default function WorkoutScreen() {
           variant="danger"
           onPress={() => Alert.alert('Terminar', '¿Seguro?', [
             { text: 'No' },
-            { text: 'Sí', style: 'destructive', onPress: () => { clock.stop(); router.back(); } },
+            { text: 'Sí', style: 'destructive', onPress: () => { clock.stop(); stopWorkout(); router.back(); } },
           ])}
         />
         <View style={{ height: 40 }} />
@@ -253,35 +272,37 @@ export default function WorkoutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: C.bg },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
-  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
-  closeText: { color: C.text, fontSize: 16 },
-  subtitle: { flex: 1, fontSize: font.sm, color: C.text2 },
-  clock: { fontSize: font.md, color: C.acc, fontWeight: '700', fontVariant: ['tabular-nums'] },
-  progInfo: { fontSize: font.xs, color: C.text3, paddingHorizontal: 16, paddingBottom: 6, paddingTop: 2 },
-  scroll: { flex: 1, paddingHorizontal: 16 },
-  hero: { backgroundColor: C.s1, borderRadius: radius.lg, padding: 16, marginTop: 8, marginBottom: 10 },
-  heroName: { fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 4, textAlign: 'center' },
-  heroInfo: { fontSize: font.md, color: C.text2, marginBottom: 12, textAlign: 'center' },
-  heroActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  mainBtn: { flex: 1, backgroundColor: C.acc, borderRadius: radius.sm, paddingVertical: 13, alignItems: 'center' },
-  mainBtnText: { fontSize: font.md, fontWeight: '800', color: '#0f0f0f' },
-  skipBtn: { backgroundColor: C.s2, borderRadius: radius.sm, paddingHorizontal: 16, paddingVertical: 13, alignItems: 'center' },
-  skipText: { fontSize: font.md, color: C.text2, fontWeight: '600' },
-  tracker: { backgroundColor: C.s1, borderRadius: radius.lg, marginBottom: 10, overflow: 'hidden' },
-  trackerHdr: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6, fontSize: font.xs, color: C.text2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  setRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: C.s2 },
-  setLabel: { fontSize: font.xs, color: C.text2 },
-  setDetail: { fontSize: font.md, color: C.text, fontWeight: '600' },
-  setBtn: { backgroundColor: C.s2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  setBtnDone: { backgroundColor: 'rgba(71,255,180,0.13)' },
-  setBtnText: { fontSize: font.sm, color: C.text2, fontWeight: '600' },
-  nextCard: { backgroundColor: C.s2, borderRadius: radius.sm, padding: 12, flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  nextLbl: { fontSize: 10, color: C.text2, letterSpacing: 1, fontWeight: '700' },
-  nextName: { fontSize: font.md, fontWeight: '600', color: C.text, marginTop: 2 },
-  pauseContainer: { alignItems: 'center', paddingVertical: 10 },
-  pauseTitle: { fontSize: font.lg, color: C.acc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-  pauseSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
-});
+function createStyles(C: ReturnType<typeof useColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: C.bg },
+    header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 16, paddingBottom: 4 },
+    closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+    closeText: { color: C.text, fontSize: 16 },
+    subtitle: { flex: 1, fontSize: font.sm, color: C.text2 },
+    clock: { fontSize: font.md, color: C.acc, fontWeight: '700', fontVariant: ['tabular-nums'] },
+    progInfo: { fontSize: font.xs, color: C.text3, paddingHorizontal: 16, paddingBottom: 6, paddingTop: 2 },
+    scroll: { flex: 1, paddingHorizontal: 16 },
+    hero: { backgroundColor: C.s1, borderRadius: radius.lg, padding: 16, marginTop: 8, marginBottom: 10 },
+    heroName: { fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 4, textAlign: 'center' },
+    heroInfo: { fontSize: font.md, color: C.text2, marginBottom: 12, textAlign: 'center' },
+    heroActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
+    mainBtn: { flex: 1, backgroundColor: C.acc, borderRadius: radius.sm, paddingVertical: 13, alignItems: 'center' },
+    mainBtnText: { fontSize: font.md, fontWeight: '800', color: '#0f0f0f' },
+    skipBtn: { backgroundColor: C.s2, borderRadius: radius.sm, paddingHorizontal: 16, paddingVertical: 13, alignItems: 'center' },
+    skipText: { fontSize: font.md, color: C.text2, fontWeight: '600' },
+    tracker: { backgroundColor: C.s1, borderRadius: radius.lg, marginBottom: 10, overflow: 'hidden' },
+    trackerHdr: { paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6, fontSize: font.xs, color: C.text2, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+    setRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 9, borderBottomWidth: 1, borderBottomColor: C.s2 },
+    setLabel: { fontSize: font.xs, color: C.text2 },
+    setDetail: { fontSize: font.md, color: C.text, fontWeight: '600' },
+    setBtn: { backgroundColor: C.s2, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
+    setBtnDone: { backgroundColor: 'rgba(71,255,180,0.13)' },
+    setBtnText: { fontSize: font.sm, color: C.text2, fontWeight: '600' },
+    nextCard: { backgroundColor: C.s2, borderRadius: radius.sm, padding: 12, flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    nextLbl: { fontSize: 10, color: C.text2, letterSpacing: 1, fontWeight: '700' },
+    nextName: { fontSize: font.md, fontWeight: '600', color: C.text, marginTop: 2 },
+    pauseContainer: { alignItems: 'center', paddingVertical: 10 },
+    pauseTitle: { fontSize: font.lg, color: C.acc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
+    pauseSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
+  });
+}
