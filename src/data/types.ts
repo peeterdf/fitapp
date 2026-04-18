@@ -35,7 +35,8 @@ export interface RoutineExercise {
   sets: number;
   reps: string;
   weight: string;
-  rest: number;
+  rest: number;        // rest between sets (seconds)
+  restAfterEx?: number; // rest after all sets, before next exercise (0 = no pause, default 60)
   isSuperset?: boolean; // if true, no rest before the next exercise (paired as A+B)
 }
 

@@ -61,6 +61,7 @@ export default function NewRoutineScreen() {
       reps: ex.reps,
       weight: ex.weight ? `${ex.weight} kg` : '—',
       rest: ex.rest,
+      restAfterEx: 60,
     }]);
     setPickerOpen(false);
   }
@@ -232,7 +233,7 @@ export default function NewRoutineScreen() {
                       />
                     </View>
                     <View style={styles.itemField}>
-                      <Text style={styles.miniLabel}>PAUSA (s)</Text>
+                      <Text style={styles.miniLabel}>PAUSA SETS (s)</Text>
                       <TextInput
                         style={styles.miniInput}
                         value={String(it.rest)}
@@ -241,6 +242,21 @@ export default function NewRoutineScreen() {
                       />
                     </View>
                   </View>
+
+                  {/* Rest after exercise */}
+                  {!isLastItem && !it.isSuperset && (
+                    <View style={styles.afterExRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.miniLabel}>PAUSA ENTRE EJERCICIOS (s) · 0 = sin pausa</Text>
+                        <TextInput
+                          style={styles.miniInput}
+                          value={String(it.restAfterEx ?? 60)}
+                          onChangeText={v => updateItem(i, { restAfterEx: parseInt(v) || 0 })}
+                          keyboardType="numeric"
+                        />
+                      </View>
+                    </View>
+                  )}
 
                   {/* Superset toggle — not available for last exercise */}
                   {!isLastItem && (
@@ -386,6 +402,7 @@ function createStyles(C: ReturnType<typeof useColors>) {
     itemField: { flexBasis: '48%', flexGrow: 1 },
     miniLabel: { fontSize: 10, color: C.text3, fontWeight: '700', letterSpacing: 0.5, marginBottom: 3 },
     miniInput: { backgroundColor: C.s2, borderRadius: radius.sm, paddingHorizontal: 10, paddingVertical: 8, color: C.text, fontSize: font.sm },
+    afterExRow: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: C.s2 },
     supersetBtn: { marginTop: 10, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, backgroundColor: C.s2, alignSelf: 'flex-start' },
     supersetBtnOn: { backgroundColor: 'rgba(71,255,180,0.1)' },
     supersetText: { fontSize: font.xs, color: C.text3, fontWeight: '600' },

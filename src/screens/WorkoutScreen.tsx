@@ -19,6 +19,7 @@ interface WorkoutItem extends Exercise {
   wReps: string;
   wWeight: string;
   wRest: number;
+  wRestAfterEx: number;
   currentSet: number;
   isSuperset: boolean;
 }
@@ -39,6 +40,7 @@ export default function WorkoutScreen() {
   const [totalSets, setTotalSets] = useState(0);
   const [doneSets, setDoneSets] = useState(0);
   const [mode, setMode] = useState<'exercise' | 'pause'>('exercise');
+  const [pauseLabel, setPauseLabel] = useState<'serie' | 'ejercicio'>('serie');
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -56,7 +58,7 @@ export default function WorkoutScreen() {
     if (singleExId) {
       const ex = exercises.find(e => e.id === Number(singleExId));
       if (!ex) return;
-      list = [{ ...ex, wSets: ex.sets, wReps: ex.reps, wWeight: ex.weight + ' kg', wRest: ex.rest, currentSet: 1, isSuperset: false }];
+      list = [{ ...ex, wSets: ex.sets, wReps: ex.reps, wWeight: ex.weight + ' kg', wRest: ex.rest, wRestAfterEx: 60, currentSet: 1, isSuperset: false }];
     } else {
       const routine = routineId
         ? routines.find(r => r.id === Number(routineId))
@@ -65,7 +67,16 @@ export default function WorkoutScreen() {
       list = source.map(item => {
         const ex = exercises.find(e => e.id === item.exId);
         if (!ex) return null;
-        return { ...ex, wSets: item.sets, wReps: item.reps, wWeight: item.weight, wRest: item.rest, currentSet: 1, isSuperset: !!item.isSuperset };
+        return {
+          ...ex,
+          wSets: item.sets,
+          wReps: item.reps,
+          wWeight: item.weight,
+          wRest: item.rest,
+          wRestAfterEx: item.restAfterEx ?? 60,
+          currentSet: 1,
+          isSuperset: !!item.isSuperset,
+        };
       }).filter(Boolean) as WorkoutItem[];
     }
     if (!list.length) {
@@ -82,14 +93,15 @@ export default function WorkoutScreen() {
     setReady(true);
   }, [exercises, routines, singleExId, routineId]);
 
-  const startPause = useCallback((secs: number, cb: () => void) => {
+  const cbRef = useRef<(() => void) | null>(null);
+
+  const startPause = useCallback((secs: number, cb: () => void, label: 'serie' | 'ejercicio' = 'serie') => {
+    setPauseLabel(label);
     setMode('pause');
     Vibration.vibrate(200);
     countdown.start(secs);
     cbRef.current = cb;
   }, []);
-
-  const cbRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     if (countdown.seconds === 0 && !countdown.running && mode === 'pause' && cbRef.current) {
@@ -104,6 +116,11 @@ export default function WorkoutScreen() {
     countdown.stop();
     setMode('exercise');
     if (cbRef.current) { cbRef.current(); cbRef.current = null; }
+  }
+
+  function adjustPause(delta: number) {
+    const next = Math.max(0, countdown.seconds + delta);
+    countdown.start(next);
   }
 
   function finishWorkout(newDone: number, itemCount: number) {
@@ -127,14 +144,15 @@ export default function WorkoutScreen() {
       if (nextIdx >= items.length) {
         finishWorkout(newDone, items.length);
       } else if (ex.isSuperset) {
-        // Superset: go directly to next exercise without rest
         Vibration.vibrate(200);
         setIdx(nextIdx);
+      } else if (ex.wRestAfterEx === 0) {
+        setIdx(nextIdx);
       } else {
-        startPause(ex.wRest, () => setIdx(nextIdx));
+        startPause(ex.wRestAfterEx, () => setIdx(nextIdx), 'ejercicio');
       }
     } else {
-      startPause(ex.wRest, () => {});
+      startPause(ex.wRest, () => {}, 'serie');
     }
   }
 
@@ -238,9 +256,24 @@ export default function WorkoutScreen() {
         ) : (
           /* Pause mode */
           <View style={styles.pauseContainer}>
-            <Text style={styles.pauseTitle}>Serie completada ✓</Text>
-            <Text style={styles.pauseSub}>Descansá antes de la próxima serie</Text>
+            <Text style={styles.pauseTitle}>
+              {pauseLabel === 'ejercicio' ? 'Ejercicio completado ✓' : 'Serie completada ✓'}
+            </Text>
+            <Text style={styles.pauseSub}>
+              {pauseLabel === 'ejercicio' ? 'Descansá antes del próximo ejercicio' : 'Descansá antes de la próxima serie'}
+            </Text>
             <TimerRing seconds={countdown.seconds} />
+
+            {/* Adjust timer */}
+            <View style={styles.adjustRow}>
+              <TouchableOpacity onPress={() => adjustPause(-15)} style={styles.adjustBtn}>
+                <Text style={styles.adjustBtnText}>−15s</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => adjustPause(+15)} style={styles.adjustBtn}>
+                <Text style={styles.adjustBtnText}>+15s</Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={styles.heroActions}>
               <TouchableOpacity onPress={endPause} style={styles.mainBtn} activeOpacity={0.85}>
                 <Text style={styles.mainBtnText}>Continuar ▶</Text>
@@ -251,8 +284,14 @@ export default function WorkoutScreen() {
             </View>
             <View style={[styles.nextCard, { marginTop: 16 }]}>
               <View>
-                <Text style={styles.nextLbl}>PRÓXIMA SERIE</Text>
-                <Text style={styles.nextName}>{ex.name} — {ex.wWeight} × {ex.wReps}</Text>
+                <Text style={styles.nextLbl}>
+                  {pauseLabel === 'ejercicio' ? 'PRÓXIMO EJERCICIO' : 'PRÓXIMA SERIE'}
+                </Text>
+                <Text style={styles.nextName}>
+                  {pauseLabel === 'ejercicio' && next
+                    ? `${next.name} — ${next.wWeight} × ${next.wReps}`
+                    : `${ex.name} — ${ex.wWeight} × ${ex.wReps}`}
+                </Text>
               </View>
             </View>
           </View>
@@ -303,6 +342,9 @@ function createStyles(C: ReturnType<typeof useColors>) {
     nextName: { fontSize: font.md, fontWeight: '600', color: C.text, marginTop: 2 },
     pauseContainer: { alignItems: 'center', paddingVertical: 10 },
     pauseTitle: { fontSize: font.lg, color: C.acc, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
-    pauseSub: { fontSize: font.sm, color: C.text2, marginTop: 4 },
+    pauseSub: { fontSize: font.sm, color: C.text2, marginTop: 4, marginBottom: 4 },
+    adjustRow: { flexDirection: 'row', gap: 12, marginTop: 8, marginBottom: 4 },
+    adjustBtn: { backgroundColor: C.s2, borderRadius: radius.sm, paddingHorizontal: 20, paddingVertical: 9 },
+    adjustBtnText: { color: C.text, fontSize: font.md, fontWeight: '700' },
   });
 }
