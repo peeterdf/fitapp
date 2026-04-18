@@ -55,7 +55,7 @@ export default function ExercisesScreen() {
                 <View style={styles.cardInfo}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={styles.cardTitle}>{ex.name}</Text>
-                    {hasMedia && <View style={styles.mediaBadge}><Text style={styles.mediaBadgeText}>{ytId ? '\ud83c\udfa5' : '\ud83d�\ufe0f'}</Text></View>}
+                    {hasMedia && <View style={styles.mediaBadge}><Text style={styles.mediaBadgeText}>{ytId ? '\ud83c\udfa5' : '\ud83d\udcf7'}</Text></View>}
                   </View>
                   <Text style={styles.cardSub}>{ex.muscle} · {ex.equip}</Text>
                   <View style={{ flexDirection: 'row', marginTop: 5 }}><Tag label={ex.muscle} accent /></View>
@@ -87,7 +87,7 @@ function createStyles(C: ReturnType<typeof useColors>) {
     searchWrap: { marginHorizontal: 16, marginBottom: 10 },
     search: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, fontSize: font.md, color: C.text },
     filterScroll: { flexGrow: 0, marginBottom: 10 },
-    chip: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 14, paddingVertical: 6, borderWidth: 1.5, borderColor: 'transparent' },
+    chip: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1.5, borderColor: 'transparent' },
     chipOn: { backgroundColor: 'rgba(232,255,71,0.12)', borderColor: 'rgba(232,255,71,0.3)' },
     chipText: { fontSize: font.sm, color: C.text2 },
     chipTextOn: { color: C.acc, fontWeight: '700' },

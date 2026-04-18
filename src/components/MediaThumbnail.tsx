@@ -25,7 +25,7 @@ export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '\ud83d\udca
             <Image source={{ uri: getYouTubeThumb(ytId) }} style={[styles.img, compact && styles.compactImg]} resizeMode="cover" />
             <View style={styles.playOverlay}>
               <View style={styles.playBtn}>
-                <Text style={styles.playIcon}>\u25b6</Text>
+                <Text style={styles.playIcon}>▶️</Text>
               </View>
             </View>
           </View>
