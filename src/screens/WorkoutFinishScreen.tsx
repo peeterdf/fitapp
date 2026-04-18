@@ -21,36 +21,18 @@ export default function WorkoutFinishScreen() {
         <Text style={styles.emoji}>🎉</Text>
         <Text style={styles.title}>¡Entrenamiento{'\n'}completado!</Text>
         <Text style={styles.sub}>Excelente trabajo.</Text>
-
         <View style={styles.grid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statVal}>{time || '00:00'}</Text>
-            <Text style={styles.statLbl}>Tiempo total</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statVal}>{exCount || '—'}</Text>
-            <Text style={styles.statLbl}>Ejercicios</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statVal}>{sets || '—'}</Text>
-            <Text style={styles.statLbl}>Series hechas</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={[styles.statVal, { color: C.acc2 }]}>💪</Text>
-            <Text style={styles.statLbl}>¡Muy bien!</Text>
-          </View>
+          <View style={styles.statCard}><Text style={styles.statVal}>{time || '00:00'}</Text><Text style={styles.statLbl}>Tiempo total</Text></View>
+          <View style={styles.statCard}><Text style={styles.statVal}>{exCount || '—'}</Text><Text style={styles.statLbl}>Ejercicios</Text></View>
+          <View style={styles.statCard}><Text style={styles.statVal}>{sets || '—'}</Text><Text style={styles.statLbl}>Series hechas</Text></View>
+          <View style={styles.statCard}><Text style={[styles.statVal, { color: C.acc2 }]}>💪</Text><Text style={styles.statLbl}>¡Muy bien!</Text></View>
         </View>
-
         <View style={styles.rachaBox}>
           <Text style={styles.rachaTitle}>RACHA SEMANAL</Text>
           <View style={styles.rachaDots}>
             {DAYS.map((d, i) => (
               <View key={d} style={styles.rdItem}>
-                <View style={[
-                  styles.rdCircle,
-                  DONE[i] && { backgroundColor: C.acc },
-                  i === TODAY && !DONE[i] && { borderWidth: 2, borderColor: C.acc },
-                ]}>
+                <View style={[styles.rdCircle, DONE[i] && { backgroundColor: C.acc }, i === TODAY && !DONE[i] && { borderWidth: 2, borderColor: C.acc }]}>
                   {DONE[i] && <Text style={{ fontSize: 12, color: C.black }}>✓</Text>}
                 </View>
                 <Text style={[styles.rdLbl, i === TODAY && { color: C.acc, fontWeight: '700' }]}>{d}</Text>
@@ -58,7 +40,6 @@ export default function WorkoutFinishScreen() {
             ))}
           </View>
         </View>
-
         <Btn label="Volver al inicio" onPress={() => router.replace('/')} />
         <View style={{ height: 40 }} />
       </ScrollView>

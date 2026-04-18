@@ -127,7 +127,6 @@ function createStyles(C: ReturnType<typeof useColors>) {
     hey: { fontSize: font.md, color: C.text2 },
     title: { fontSize: font.xxxl, fontWeight: '900', color: C.text, letterSpacing: -1 },
     scroll: { flex: 1, paddingHorizontal: 16, marginTop: 4 },
-
     quickStart: {
       marginTop: 12, backgroundColor: C.acc,
       borderRadius: radius.lg, padding: 18,
@@ -137,25 +136,19 @@ function createStyles(C: ReturnType<typeof useColors>) {
     qsName: { fontSize: font.xl, fontWeight: '900', color: C.black, letterSpacing: -0.3 },
     qsMeta: { fontSize: font.sm, color: C.black, opacity: 0.7, marginTop: 2 },
     qsPlay: { fontSize: 24, color: C.black, marginLeft: 10 },
-
     emptyQuick: {
       marginTop: 12, backgroundColor: C.s1, borderRadius: radius.lg,
       padding: 20, alignItems: 'center', borderWidth: 1.5, borderColor: C.s2, borderStyle: 'dashed',
     },
     emptyQuickTitle: { color: C.text, fontSize: font.lg, fontWeight: '700' },
     emptyQuickSub: { color: C.text2, fontSize: font.sm, marginTop: 4 },
-
     statsRow: { flexDirection: 'row', gap: 8 },
     statBox: { flex: 1, backgroundColor: C.s1, borderRadius: radius.md, padding: 14, alignItems: 'center' },
     statVal: { fontSize: 22, fontWeight: '900', color: C.acc },
     statLbl: { fontSize: font.xs, color: C.text2, marginTop: 2 },
     statsHint: { fontSize: font.xs, color: C.text3, marginTop: 6, fontStyle: 'italic' },
-
     shortcutsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    shortcut: {
-      width: '48%', backgroundColor: C.s1, borderRadius: radius.md,
-      padding: 14, alignItems: 'flex-start',
-    },
+    shortcut: { width: '48%', backgroundColor: C.s1, borderRadius: radius.md, padding: 14, alignItems: 'flex-start' },
     shortcutEmoji: { fontSize: 28, marginBottom: 6 },
     shortcutLabel: { fontSize: font.md, fontWeight: '800', color: C.text },
     shortcutSub: { fontSize: font.xs, color: C.text2, marginTop: 2 },

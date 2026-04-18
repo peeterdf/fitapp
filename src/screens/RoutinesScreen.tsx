@@ -23,7 +23,6 @@ export default function RoutinesScreen() {
         <Text style={styles.title}>Rutinas</Text>
         <Text style={styles.subtitle}>{routines.length} {routines.length === 1 ? 'rutina' : 'rutinas'}</Text>
       </View>
-
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
         {routines.length === 0 ? (
           <View style={styles.empty}>
@@ -34,18 +33,11 @@ export default function RoutinesScreen() {
         ) : (
           routines.map(routine => {
             const muscles = Array.from(new Set(
-              routine.exercises
-                .map(re => exercises.find(e => e.id === re.exId)?.muscle)
-                .filter(Boolean)
+              routine.exercises.map(re => exercises.find(e => e.id === re.exId)?.muscle).filter(Boolean)
             )) as string[];
-
             return (
-              <TouchableOpacity
-                key={routine.id}
-                style={styles.card}
-                activeOpacity={0.85}
-                onPress={() => router.push({ pathname: '/routine-detail', params: { id: String(routine.id) } })}
-              >
+              <TouchableOpacity key={routine.id} style={styles.card} activeOpacity={0.85}
+                onPress={() => router.push({ pathname: '/routine-detail', params: { id: String(routine.id) } })}>
                 <View style={styles.cardRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.cardTitle}>{routine.name}</Text>
@@ -57,12 +49,9 @@ export default function RoutinesScreen() {
                   </View>
                   <Text style={styles.arrow}>›</Text>
                 </View>
-
                 {muscles.length > 0 && (
                   <View style={styles.tags}>
-                    {muscles.slice(0, 4).map(m => (
-                      <Tag key={m} label={`${MUSCLE_EMOJIS[m] || ''} ${m}`} />
-                    ))}
+                    {muscles.slice(0, 4).map(m => <Tag key={m} label={`${MUSCLE_EMOJIS[m] || ''} ${m}`} />)}
                   </View>
                 )}
               </TouchableOpacity>
@@ -70,7 +59,6 @@ export default function RoutinesScreen() {
           })
         )}
       </ScrollView>
-
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/new-routine' as any)} activeOpacity={0.85}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -94,12 +82,7 @@ function createStyles(C: ReturnType<typeof useColors>) {
     empty: { alignItems: 'center', marginTop: 80, paddingHorizontal: 24 },
     emptyTitle: { color: C.text, fontSize: font.lg, fontWeight: '700', marginBottom: 4 },
     emptySub: { color: C.text2, fontSize: font.md, textAlign: 'center' },
-    fab: {
-      position: 'absolute', bottom: 86, right: 16,
-      width: 54, height: 54, borderRadius: 27,
-      backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center',
-      shadowColor: C.acc, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 8,
-    },
+    fab: { position: 'absolute', bottom: 86, right: 16, width: 54, height: 54, borderRadius: 27, backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center', elevation: 8 },
     fabText: { fontSize: 28, fontWeight: '900', color: C.black },
   });
 }
