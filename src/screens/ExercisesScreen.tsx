@@ -29,33 +29,17 @@ export default function ExercisesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Ejercicios</Text>
-      </View>
-
+      <View style={styles.header}><Text style={styles.title}>Ejercicios</Text></View>
       <View style={styles.searchWrap}>
-        <TextInput
-          style={styles.search}
-          placeholder="🔍  Buscar ejercicio..."
-          placeholderTextColor={C.text2}
-          value={query}
-          onChangeText={setQuery}
-          returnKeyType="search"
-        />
+        <TextInput style={styles.search} placeholder="🔍  Buscar ejercicio..." placeholderTextColor={C.text2} value={query} onChangeText={setQuery} returnKeyType="search" />
       </View>
-
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
         {FILTERS.map(f => (
-          <TouchableOpacity
-            key={f}
-            onPress={() => setFilter(f)}
-            style={[styles.chip, filter === f && styles.chipOn]}
-          >
+          <TouchableOpacity key={f} onPress={() => setFilter(f)} style={[styles.chip, filter === f && styles.chipOn]}>
             <Text style={[styles.chipText, filter === f && styles.chipTextOn]}>{f}</Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
-
       <FlatList
         data={filtered}
         keyExtractor={ex => String(ex.id)}
@@ -65,31 +49,16 @@ export default function ExercisesScreen() {
           const ytId = getYouTubeId(ex.youtube);
           const hasMedia = ytId || ex.imageUri;
           return (
-            <TouchableOpacity
-              style={styles.card}
-              onPress={() => router.push({ pathname: '/exercise-detail', params: { id: ex.id } })}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity style={styles.card} onPress={() => router.push({ pathname: '/exercise-detail', params: { id: ex.id } })} activeOpacity={0.8}>
               <View style={styles.cardRow}>
-                <MediaThumbnail
-                  youtube={ex.youtube}
-                  imageUri={ex.imageUri}
-                  fallbackEmoji={MUSCLE_EMOJIS[ex.muscle] || '💪'}
-                  compact
-                />
+                <MediaThumbnail youtube={ex.youtube} imageUri={ex.imageUri} fallbackEmoji={MUSCLE_EMOJIS[ex.muscle] || '\ud83d\udcaa'} compact />
                 <View style={styles.cardInfo}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={styles.cardTitle}>{ex.name}</Text>
-                    {hasMedia && (
-                      <View style={styles.mediaBadge}>
-                        <Text style={styles.mediaBadgeText}>{ytId ? '🎥' : '🖼️'}</Text>
-                      </View>
-                    )}
+                    {hasMedia && <View style={styles.mediaBadge}><Text style={styles.mediaBadgeText}>{ytId ? '\ud83c\udfa5' : '\ud83d�\ufe0f'}</Text></View>}
                   </View>
                   <Text style={styles.cardSub}>{ex.muscle} · {ex.equip}</Text>
-                  <View style={{ flexDirection: 'row', marginTop: 5 }}>
-                    <Tag label={ex.muscle} accent />
-                  </View>
+                  <View style={{ flexDirection: 'row', marginTop: 5 }}><Tag label={ex.muscle} accent /></View>
                 </View>
                 <Badge label={`${ex.sets}×${ex.reps}`} />
               </View>
@@ -103,7 +72,6 @@ export default function ExercisesScreen() {
           </View>
         }
       />
-
       <TouchableOpacity style={styles.fab} onPress={() => router.push('/new-exercise')}>
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
@@ -131,12 +99,7 @@ function createStyles(C: ReturnType<typeof useColors>) {
     mediaBadge: { backgroundColor: 'rgba(232,255,71,0.12)', borderRadius: 6, paddingHorizontal: 5, paddingVertical: 2 },
     mediaBadgeText: { fontSize: 12 },
     empty: { alignItems: 'center', marginTop: 60 },
-    fab: {
-      position: 'absolute', bottom: 86, right: 16,
-      width: 54, height: 54, borderRadius: 27,
-      backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center',
-      elevation: 8,
-    },
+    fab: { position: 'absolute', bottom: 86, right: 16, width: 54, height: 54, borderRadius: 27, backgroundColor: C.acc, alignItems: 'center', justifyContent: 'center', elevation: 8 },
     fabText: { fontSize: 28, fontWeight: '900', color: C.black },
   });
 }

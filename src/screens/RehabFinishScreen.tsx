@@ -21,14 +21,12 @@ export default function RehabFinishScreen() {
         <Text style={styles.emoji}>🩹</Text>
         <Text style={styles.title}>¡Rehab{'\n'}completada!</Text>
         <Text style={styles.sub}>Seguís en el camino. Muy bien.</Text>
-
         <View style={styles.grid}>
           <View style={styles.statCard}><Text style={styles.statVal}>{time || '00:00'}</Text><Text style={styles.statLbl}>Tiempo total</Text></View>
           <View style={styles.statCard}><Text style={styles.statVal}>3</Text><Text style={styles.statLbl}>Bloques</Text></View>
           <View style={styles.statCard}><Text style={styles.statVal}>11</Text><Text style={styles.statLbl}>Ejercicios</Text></View>
           <View style={styles.statCard}><Text style={[styles.statVal, { color: C.acc2 }]}>6</Text><Text style={styles.statLbl}>Vueltas hechas</Text></View>
         </View>
-
         <View style={styles.rachaBox}>
           <Text style={styles.rachaTitle}>RACHA SEMANAL</Text>
           <View style={styles.rachaDots}>
@@ -42,7 +40,6 @@ export default function RehabFinishScreen() {
             ))}
           </View>
         </View>
-
         <Btn label="Volver a Rehab" onPress={() => router.replace('/(tabs)/rehab')} />
         <Btn label="Ir al inicio" variant="secondary" onPress={() => router.replace('/')} />
         <View style={{ height: 40 }} />

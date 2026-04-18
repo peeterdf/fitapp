@@ -24,43 +24,23 @@ export default function RehabScreen() {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={styles.headerSub}>🩹 Recuperación</Text>
-          <Text style={styles.title}>
-            Rehab <Text style={{ color: C.acc }}>Cadera</Text>
-          </Text>
+          <Text style={styles.title}>Rehab <Text style={{ color: C.acc }}>Cadera</Text></Text>
         </View>
-        <TouchableOpacity
-          onPress={() => router.push('/new-rehab' as any)}
-          style={styles.addHeaderBtn}
-          activeOpacity={0.8}
-        >
+        <TouchableOpacity onPress={() => router.push('/new-rehab' as any)} style={styles.addHeaderBtn} activeOpacity={0.8}>
           <Text style={styles.addHeaderBtnText}>+ Bloque</Text>
         </TouchableOpacity>
       </View>
-
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Hero */}
         <View style={styles.hero}>
-          <View style={styles.heroTag}>
-            <Text style={styles.heroTagText}>CADERA · FUNCIONAL</Text>
-          </View>
+          <View style={styles.heroTag}><Text style={styles.heroTagText}>CADERA · FUNCIONAL</Text></View>
           <Text style={styles.heroTitle}>Rutina de Rehabilitación</Text>
           <Text style={styles.heroSub}>{bloques.length} bloque{bloques.length !== 1 ? 's' : ''} · ~{durationEstimate} min</Text>
           <View style={styles.heroStats}>
-            <View>
-              <Text style={styles.heroVal}>{bloques.length}</Text>
-              <Text style={styles.heroLbl}>bloques</Text>
-            </View>
-            <View>
-              <Text style={styles.heroVal}>{totalExercises}</Text>
-              <Text style={styles.heroLbl}>ejercicios</Text>
-            </View>
-            <View>
-              <Text style={[styles.heroVal, { color: C.acc2 }]}>{durationEstimate}</Text>
-              <Text style={styles.heroLbl}>min aprox</Text>
-            </View>
+            <View><Text style={styles.heroVal}>{bloques.length}</Text><Text style={styles.heroLbl}>bloques</Text></View>
+            <View><Text style={styles.heroVal}>{totalExercises}</Text><Text style={styles.heroLbl}>ejercicios</Text></View>
+            <View><Text style={[styles.heroVal, { color: C.acc2 }]}>{durationEstimate}</Text><Text style={styles.heroLbl}>min aprox</Text></View>
           </View>
         </View>
-
         {bloques.length === 0 ? (
           <View style={styles.empty}>
             <Text style={{ fontSize: 40, marginBottom: 8 }}>🩹</Text>
@@ -70,19 +50,12 @@ export default function RehabScreen() {
         ) : (
           bloques.map((bloque, i) => (
             <View key={i} style={[styles.bloqueCard, { borderLeftColor: BORDER_OPACITY[i % BORDER_OPACITY.length] }]}>
-              <TouchableOpacity
-                onPress={() => router.push({ pathname: '/rehab-bloque', params: { idx: i } })}
-                activeOpacity={0.8}
-              >
+              <TouchableOpacity onPress={() => router.push({ pathname: '/rehab-bloque', params: { idx: i } })} activeOpacity={0.8}>
                 <View style={styles.bloqueHdr}>
                   <Text style={styles.bloqueName}>Bloque {i + 1} — {bloque.name}</Text>
                   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                     <Badge label={`${bloque.vueltas} vuelta${bloque.vueltas > 1 ? 's' : ''}`} variant="yellow" />
-                    <TouchableOpacity
-                      onPress={() => router.push({ pathname: '/new-rehab' as any, params: { idx: String(i) } })}
-                      style={styles.editBtn}
-                      activeOpacity={0.7}
-                    >
+                    <TouchableOpacity onPress={() => router.push({ pathname: '/new-rehab' as any, params: { idx: String(i) } })} style={styles.editBtn} activeOpacity={0.7}>
                       <Text style={styles.editBtnText}>✎</Text>
                     </TouchableOpacity>
                   </View>
@@ -98,14 +71,7 @@ export default function RehabScreen() {
             </View>
           ))
         )}
-
-        {bloques.length > 0 && (
-          <Btn
-            label="▶  Iniciar Rehabilitación"
-            onPress={() => router.push({ pathname: '/rehab-active', params: { bloqueIdx: 0 } })}
-            style={{ marginTop: 10 }}
-          />
-        )}
+        {bloques.length > 0 && <Btn label="\u25b6  Iniciar Rehabilitación" onPress={() => router.push({ pathname: '/rehab-active', params: { bloqueIdx: 0 } })} style={{ marginTop: 10 }} />}
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>
