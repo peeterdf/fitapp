@@ -8,7 +8,7 @@ import { useColors } from '../contexts/ThemeContext';
 
 type Colors = ReturnType<typeof useColors>;
 
-// ─── Badge ───────────────────────────────────────────────
+// ─── Badge ────────────────────────────────────────────────
 type BadgeVariant = 'yellow' | 'green' | 'red' | 'acc';
 export function Badge({ label, variant = 'yellow' }: { label: string; variant?: BadgeVariant }) {
   const C = useColors();
@@ -30,7 +30,7 @@ const badgeStyles = StyleSheet.create({
   text: { fontSize: font.xs, fontWeight: '700' },
 });
 
-// ─── Chip / Tag ──────────────────────────────────────────
+// ─── Tag ────────────────────────────────────────────────
 export function Tag({ label, accent }: { label: string; accent?: boolean }) {
   const C = useColors();
   return (
@@ -40,7 +40,7 @@ export function Tag({ label, accent }: { label: string; accent?: boolean }) {
   );
 }
 
-// ─── Button ──────────────────────────────────────────────
+// ─── Button ────────────────────────────────────────────────
 type BtnVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 export function Btn({
   label, onPress, variant = 'primary', icon, style, disabled,
@@ -87,7 +87,7 @@ export function Card({ children, onPress, style }: { children: React.ReactNode; 
   return <View style={[cardStyle, style]}>{children}</View>;
 }
 
-// ─── Section Title ───────────────────────────────────────
+// ─── Section Title ───────────────────────────────────────────────
 export function SectionTitle({ label, style }: { label: string; style?: TextStyle }) {
   const C = useColors();
   return (
@@ -97,7 +97,7 @@ export function SectionTitle({ label, style }: { label: string; style?: TextStyl
   );
 }
 
-// ─── Stat Box ────────────────────────────────────────────
+// ─── Stat Box ───────────────────────────────────────────────
 export function StatBox({ value, label, color }: { value: string | number; label: string; color?: string }) {
   const C = useColors();
   return (
@@ -108,7 +108,7 @@ export function StatBox({ value, label, color }: { value: string | number; label
   );
 }
 
-// ─── Progress Bar ────────────────────────────────────────
+// ─── Progress Bar ──────────────────────────────────────────────
 export function ProgressBar({ pct }: { pct: number }) {
   const C = useColors();
   return (
@@ -118,7 +118,7 @@ export function ProgressBar({ pct }: { pct: number }) {
   );
 }
 
-// ─── Timer Ring ──────────────────────────────────────────
+// ─── Timer Ring ──────────────────────────────────────────────
 export function TimerRing({ seconds }: { seconds: number }) {
   const C = useColors();
   return (
@@ -129,7 +129,7 @@ export function TimerRing({ seconds }: { seconds: number }) {
   );
 }
 
-// ─── Set Circle ──────────────────────────────────────────
+// ─── Set Circle ──────────────────────────────────────────────
 export function SetCircle({ n, state }: { n: number | string; state: 'done' | 'current' | 'pending' }) {
   const C = useColors();
   const s = {
@@ -139,12 +139,12 @@ export function SetCircle({ n, state }: { n: number | string; state: 'done' | 'c
   }[state];
   return (
     <View style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: s.bg, borderColor: s.border }}>
-      <Text style={{ fontSize: 11, fontWeight: '700', color: s.txt }}>{state === 'done' ? '✓' : n}</Text>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: s.txt }}>{state === 'done' ? '\u2713' : n}</Text>
     </View>
   );
 }
 
-// ─── Vuelta Dots ─────────────────────────────────────────
+// ─── Vuelta Dots ───────────────────────────────────────────────
 export function VueltaDots({ total, current }: { total: number; current: number }) {
   const C = useColors();
   return (
@@ -166,7 +166,7 @@ export function VueltaDots({ total, current }: { total: number; current: number 
   );
 }
 
-// ─── Loading ─────────────────────────────────────────────
+// ─── Loading ────────────────────────────────────────────────────
 export function Loading() {
   const C = useColors();
   return (

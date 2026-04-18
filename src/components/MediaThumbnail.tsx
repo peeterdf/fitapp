@@ -12,7 +12,7 @@ interface Props {
   compact?: boolean;
 }
 
-export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '💪', compact = false }: Props) {
+export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '\ud83d\udcaa', compact = false }: Props) {
   const C = useColors();
   const [videoOpen, setVideoOpen] = useState(false);
   const ytId = getYouTubeId(youtube || '');
@@ -25,7 +25,7 @@ export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '💪', comp
             <Image source={{ uri: getYouTubeThumb(ytId) }} style={[styles.img, compact && styles.compactImg]} resizeMode="cover" />
             <View style={styles.playOverlay}>
               <View style={styles.playBtn}>
-                <Text style={styles.playIcon}>▶</Text>
+                <Text style={styles.playIcon}>\u25b6</Text>
               </View>
             </View>
           </View>
