@@ -7,6 +7,7 @@ import { SectionTitle, Loading } from '../components/UI';
 import { useRoutinesContext } from '../contexts/RoutinesContext';
 import { useExercisesContext } from '../contexts/ExercisesContext';
 import { useRehabContext } from '../contexts/RehabContext';
+import { useFeature, useBranding } from '../hooks/useFeature';
 
 const DAYS = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
@@ -32,6 +33,13 @@ export default function HomeScreen() {
   const { exercises, loading: eLoading } = useExercisesContext();
   const { bloques } = useRehabContext();
 
+  const branding = useBranding();
+  const showQuickStart = useFeature('home.quickStart');
+  const showStats = useFeature('home.weeklyStats');
+  const showExShortcut = useFeature('home.shortcuts.exercises');
+  const showRoutineShortcut = useFeature('home.shortcuts.routines');
+  const showRehabShortcut = useFeature('home.shortcuts.rehab');
+
   const today = todayName();
   const quickRoutine = useMemo(
     () => routines.find(r => matchesToday(r.days)) ?? routines[0],
@@ -45,7 +53,7 @@ export default function HomeScreen() {
       <View style={styles.greeting}>
         <View style={styles.headerRow}>
           <View>
-            <Text style={styles.hey}>💪 ¡Hola!</Text>
+            <Text style={styles.hey}>{branding.emoji} ¡Hola!</Text>
             <Text style={styles.title}>Hoy es <Text style={{ color: C.acc }}>{today}</Text></Text>
           </View>
           <TouchableOpacity onPress={() => router.push('/settings' as any)} style={styles.settingsBtn}>
@@ -55,7 +63,7 @@ export default function HomeScreen() {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-        {quickRoutine ? (
+        {showQuickStart && (quickRoutine ? (
           <TouchableOpacity
             style={styles.quickStart}
             onPress={() => router.push({ pathname: '/workout', params: { routineId: String(quickRoutine.id) } })}
@@ -76,30 +84,34 @@ export default function HomeScreen() {
             <Text style={styles.emptyQuickTitle}>Aún no tenés rutinas</Text>
             <Text style={styles.emptyQuickSub}>Creá una desde el tab Rutinas</Text>
           </View>
-        )}
+        ))}
 
-        <SectionTitle label="Esta semana" />
-        <View style={styles.statsRow}>
-          <View style={styles.statBox}>
-            <Text style={styles.statVal}>—</Text>
-            <Text style={styles.statLbl}>sesiones</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={[styles.statVal, { color: C.acc2 }]}>—</Text>
-            <Text style={styles.statLbl}>tiempo</Text>
-          </View>
-          <View style={styles.statBox}>
-            <Text style={styles.statVal}>—</Text>
-            <Text style={styles.statLbl}>volumen</Text>
-          </View>
-        </View>
-        <Text style={styles.statsHint}>Se activará cuando registres entrenamientos.</Text>
+        {showStats && (
+          <>
+            <SectionTitle label="Esta semana" />
+            <View style={styles.statsRow}>
+              <View style={styles.statBox}>
+                <Text style={styles.statVal}>—</Text>
+                <Text style={styles.statLbl}>sesiones</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={[styles.statVal, { color: C.acc2 }]}>—</Text>
+                <Text style={styles.statLbl}>tiempo</Text>
+              </View>
+              <View style={styles.statBox}>
+                <Text style={styles.statVal}>—</Text>
+                <Text style={styles.statLbl}>volumen</Text>
+              </View>
+            </View>
+            <Text style={styles.statsHint}>Se activará cuando registres entrenamientos.</Text>
+          </>
+        )}
 
         <SectionTitle label="Accesos rápidos" />
         <View style={styles.shortcutsGrid}>
-          <Shortcut C={C} styles={styles} emoji="🏋️" label="Ejercicios" sub={`${exercises.length}`} onPress={() => router.push('/(tabs)/exercises')} />
-          <Shortcut C={C} styles={styles} emoji="📋" label="Rutinas" sub={`${routines.length}`} onPress={() => router.push('/(tabs)/routines')} />
-          <Shortcut C={C} styles={styles} emoji="🩹" label="Rehab" sub={`${bloques.length} bloques`} onPress={() => router.push('/(tabs)/rehab')} />
+          {showExShortcut && <Shortcut C={C} styles={styles} emoji="🏋️" label="Ejercicios" sub={`${exercises.length}`} onPress={() => router.push('/(tabs)/exercises')} />}
+          {showRoutineShortcut && <Shortcut C={C} styles={styles} emoji="📋" label="Rutinas" sub={`${routines.length}`} onPress={() => router.push('/(tabs)/routines')} />}
+          {showRehabShortcut && <Shortcut C={C} styles={styles} emoji="🩹" label="Rehab" sub={`${bloques.length} bloques`} onPress={() => router.push('/(tabs)/rehab')} />}
           <Shortcut C={C} styles={styles} emoji="⚙️" label="Ajustes" sub="Importar" onPress={() => router.push('/settings' as any)} />
         </View>
       </ScrollView>

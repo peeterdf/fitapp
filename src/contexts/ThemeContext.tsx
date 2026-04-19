@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DARK_C, LIGHT_C, ColorPalette } from '../data/theme';
+import { DARK_C, ColorPalette } from '../data/theme';
+import { useAppMode } from './AppModeContext';
 
 const KEY = 'fitapp_theme_v1';
 
@@ -18,6 +19,7 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDark, setIsDark] = useState(true);
+  const { mode } = useAppMode();
 
   useEffect(() => {
     AsyncStorage.getItem(KEY).then(v => {
@@ -33,8 +35,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     });
   };
 
+  const palette = isDark ? mode.palette.dark : mode.palette.light;
+
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme, C: isDark ? DARK_C : LIGHT_C }}>
+    <ThemeContext.Provider value={{ isDark, toggleTheme, C: palette }}>
       {children}
     </ThemeContext.Provider>
   );

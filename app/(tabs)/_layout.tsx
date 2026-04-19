@@ -3,6 +3,7 @@ import { Text, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '../../src/contexts/ThemeContext';
 import { useWorkoutTimer } from '../../src/contexts/WorkoutTimerContext';
+import { useFeature } from '../../src/hooks/useFeature';
 
 function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
   return (
@@ -48,6 +49,9 @@ function WorkoutBanner() {
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   const C = useColors();
+  const showExercises = useFeature('tab.exercises');
+  const showRoutines = useFeature('tab.routines');
+  const showRehab = useFeature('tab.rehab');
 
   return (
     <View style={{ flex: 1 }}>
@@ -79,6 +83,7 @@ export default function TabsLayout() {
           name="exercises"
           options={{
             title: 'Ejercicios',
+            tabBarButton: showExercises ? undefined : () => null,
             tabBarIcon: ({ focused }) => <TabIcon emoji="🏋️" focused={focused} />,
             tabBarLabel: ({ focused }) => <TabLabel label="Ejercicios" focused={focused} />,
           }}
@@ -87,6 +92,7 @@ export default function TabsLayout() {
           name="routines"
           options={{
             title: 'Rutinas',
+            tabBarButton: showRoutines ? undefined : () => null,
             tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
             tabBarLabel: ({ focused }) => <TabLabel label="Rutinas" focused={focused} />,
           }}
@@ -95,6 +101,7 @@ export default function TabsLayout() {
           name="rehab"
           options={{
             title: 'Rehab',
+            tabBarButton: showRehab ? undefined : () => null,
             tabBarIcon: ({ focused }) => <TabIcon emoji="🩹" focused={focused} />,
             tabBarLabel: ({ focused }) => <TabLabel label="Rehab" focused={focused} />,
           }}

@@ -13,6 +13,7 @@ import { useTimer, useCountdown } from '../hooks/useTimer';
 import { MUSCLE_EMOJIS } from '../data/data';
 import { Exercise, RoutineExercise } from '../data/types';
 import { fmtTime } from '../data/utils';
+import { useFeature } from '../hooks/useFeature';
 
 interface WorkoutItem extends Exercise {
   wSets: number;
@@ -42,6 +43,8 @@ export default function WorkoutScreen() {
   const [mode, setMode] = useState<'exercise' | 'pause'>('exercise');
   const [pauseLabel, setPauseLabel] = useState<'serie' | 'ejercicio'>('serie');
   const [ready, setReady] = useState(false);
+  const canAdjustRest = useFeature('workout.restAdjust');
+  const canSuperset = useFeature('workout.supersets');
 
   useEffect(() => {
     activateKeepAwakeAsync();
@@ -183,8 +186,8 @@ export default function WorkoutScreen() {
         {mode === 'exercise' ? (
           <>
             {/* Exercise hero */}
-            <View style={[styles.hero, ex.isSuperset && { borderLeftWidth: 3, borderLeftColor: C.acc2 }]}>
-              {ex.isSuperset && (
+            <View style={[styles.hero, (canSuperset && ex.isSuperset) && { borderLeftWidth: 3, borderLeftColor: C.acc2 }]}>
+              {canSuperset && ex.isSuperset && (
                 <View style={{ backgroundColor: 'rgba(71,255,180,0.1)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, alignSelf: 'center', marginBottom: 6 }}>
                   <Text style={{ color: C.acc2, fontSize: font.xs, fontWeight: '700' }}>⚡ SUPERSERIE — sin pausa con el siguiente</Text>
                 </View>
@@ -265,14 +268,16 @@ export default function WorkoutScreen() {
             <TimerRing seconds={countdown.seconds} />
 
             {/* Adjust timer */}
-            <View style={styles.adjustRow}>
-              <TouchableOpacity onPress={() => adjustPause(-15)} style={styles.adjustBtn}>
-                <Text style={styles.adjustBtnText}>−15s</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => adjustPause(+15)} style={styles.adjustBtn}>
-                <Text style={styles.adjustBtnText}>+15s</Text>
-              </TouchableOpacity>
-            </View>
+            {canAdjustRest && (
+              <View style={styles.adjustRow}>
+                <TouchableOpacity onPress={() => adjustPause(-15)} style={styles.adjustBtn}>
+                  <Text style={styles.adjustBtnText}>−15s</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => adjustPause(+15)} style={styles.adjustBtn}>
+                  <Text style={styles.adjustBtnText}>+15s</Text>
+                </TouchableOpacity>
+              </View>
+            )}
 
             <View style={styles.heroActions}>
               <TouchableOpacity onPress={endPause} style={styles.mainBtn} activeOpacity={0.85}>

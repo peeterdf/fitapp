@@ -11,6 +11,7 @@ import { useRoutinesContext } from '../contexts/RoutinesContext';
 import { useExercisesContext } from '../contexts/ExercisesContext';
 import { MUSCLE_EMOJIS, ROUTINE_TEMPLATES } from '../data/data';
 import { Routine, RoutineExercise } from '../data/types';
+import { useFeature } from '../hooks/useFeature';
 
 function FieldLabel({ text, C }: { text: string; C: ReturnType<typeof useColors> }) {
   return <Text style={{ fontSize: font.xs, color: C.text2, fontWeight: '700', letterSpacing: 0.5, marginBottom: 5, marginTop: 6 }}>{text.toUpperCase()}</Text>;
@@ -25,6 +26,7 @@ export default function NewRoutineScreen() {
   const { exercises } = useExercisesContext();
 
   const editing = id ? routines.find(r => r.id === Number(id)) : undefined;
+  const canUseTemplates = useFeature('routine.templates');
 
   const [name, setName] = useState(editing?.name ?? '');
   const [desc, setDesc] = useState(editing?.desc ?? '');
@@ -118,7 +120,7 @@ export default function NewRoutineScreen() {
             <Text style={styles.backText}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>{editing ? 'Editar Rutina' : 'Nueva Rutina'}</Text>
-          {!editing && (
+          {!editing && canUseTemplates && (
             <TouchableOpacity onPress={() => setTemplateOpen(true)} style={styles.templateBtn}>
               <Text style={styles.templateBtnText}>Plantilla</Text>
             </TouchableOpacity>

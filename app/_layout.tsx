@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ExercisesProvider } from '../src/contexts/ExercisesContext';
 import { RoutinesProvider } from '../src/contexts/RoutinesContext';
 import { RehabProvider } from '../src/contexts/RehabContext';
+import { AppModeProvider } from '../src/contexts/AppModeContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { WorkoutTimerProvider } from '../src/contexts/WorkoutTimerContext';
 import ErrorBoundary from '../src/components/ErrorBoundary';
@@ -35,6 +36,7 @@ export default function RootLayout() {
   return (
     <ErrorBoundary>
       <SafeAreaProvider>
+        <AppModeProvider>
         <ThemeProvider>
           <WorkoutTimerProvider>
             <ExercisesProvider>
@@ -46,6 +48,7 @@ export default function RootLayout() {
             </ExercisesProvider>
           </WorkoutTimerProvider>
         </ThemeProvider>
+        </AppModeProvider>
       </SafeAreaProvider>
     </ErrorBoundary>
   );
