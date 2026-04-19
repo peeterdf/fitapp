@@ -175,16 +175,44 @@ Editá `src/config/modes.ts` y agregá un objeto al array `APP_MODES`:
 
 ## Funcionalidades
 
-- ✅ Ejercicios con descripción, series, reps, peso, pausa, video YouTube, imagen
-- ✅ Rutinas personalizables con superseries, pausa configurable entre ejercicios
-- ✅ Plantillas de rutina (PPL, 5×5, Upper/Lower)
-- ✅ Entrenamiento activo: timer de pausa automático, ajuste ±15s, progreso por series
-- ✅ Rehabilitación con bloques, vueltas y timer de pausa
-- ✅ Sistema de modos: 4 versiones de la app con paleta y features propias
-- ✅ Tema claro/oscuro (la paleta respeta el modo activo)
-- ✅ Backup: exportar/importar JSON completo
-- ✅ Datos guardados localmente (AsyncStorage)
-- ✅ Pantalla encendida durante el entrenamiento
+### Ejercicios
+- ✅ Crear/editar/eliminar ejercicios con nombre, descripción, series, reps, peso, pausa, dificultad, equipamiento
+- ✅ Video de YouTube por ejercicio (YouTube, youtu.be, Shorts — auto-detectado)
+- ✅ Imagen de referencia desde la galería
+- ✅ Historial de pesos por ejercicio (fecha + carga registrada)
+- ✅ Filtro por grupo muscular y búsqueda por nombre
+
+### Rutinas
+- ✅ Crear/editar/eliminar rutinas con días, duración estimada y lista de ejercicios
+- ✅ Superseries (A+B): marcar dos ejercicios como superserie para eliminar la pausa entre ellos
+- ✅ Pausa configurable entre ejercicios (independiente de la pausa entre series; 0 = sin pausa)
+- ✅ Plantillas de rutina: PPL Push/Pull/Legs, 5×5 A/B, Upper/Lower (7 plantillas)
+- ✅ Reordenar ejercicios con ↑/↓
+
+### Entrenamiento activo
+- ✅ Timer de pausa automático entre series y entre ejercicios
+- ✅ Ajuste manual del timer en vivo (−15s / +15s)
+- ✅ Banner global de "entrenamiento en curso" visible en toda la app
+- ✅ Progreso visual por series y % de completado
+- ✅ Vibración al completar serie y al terminar pausa
+- ✅ Pantalla encendida (expo-keep-awake)
+- ✅ Pantalla de resumen al finalizar
+
+### Rehabilitación
+- ✅ Bloques de rehab con nombre, vueltas y lista de ejercicios
+- ✅ Crear/editar/eliminar bloques (CRUD completo)
+- ✅ Sesión activa con timer, progreso por ejercicio y pausa entre bloques
+- ✅ Tips técnicos y equipamiento por ejercicio
+
+### Tema y modos de app
+- ✅ Tema claro/oscuro con toggle desde Configuración
+- ✅ **Sistema de modos**: 4 versiones de la app (full, basic, rehab, coach) con paleta de colores, branding y features propios — ver sección de Modos
+- ✅ El modo y el tema persisten entre reinicios
+
+### Datos y backup
+- ✅ Persistencia local con AsyncStorage (sin backend)
+- ✅ Exportar backup completo (ejercicios + rutinas + rehab) como JSON
+- ✅ Importar backup completo o solo ejercicios desde JSON
 
 ---
 
