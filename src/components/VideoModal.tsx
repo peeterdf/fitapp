@@ -2,7 +2,6 @@ import React from 'react';
 import { Modal, View, TouchableOpacity, Text, StyleSheet, Dimensions } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { C } from '../data/theme';
-import { getYouTubeEmbed } from '../data/utils';
 
 const { width } = Dimensions.get('window');
 
@@ -22,11 +21,14 @@ export function VideoModal({ visible, youtubeId, onClose }: Props) {
         <View style={styles.videoWrap}>
           {visible && (
             <WebView
-              source={{ uri: getYouTubeEmbed(youtubeId) }}
+              source={{ html: `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;background:#000}iframe{width:100%;height:100vh;border:0}</style></head><body><iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=1&playsinline=1&rel=0" allowfullscreen allow="autoplay;encrypted-media"></iframe></body></html>`, baseUrl: 'https://www.youtube.com' }}
               style={styles.video}
               allowsFullscreenVideo
               javaScriptEnabled
+              domStorageEnabled
+              allowsInlineMediaPlayback
               mediaPlaybackRequiresUserAction={false}
+              originWhitelist={['*']}
             />
           )}
         </View>

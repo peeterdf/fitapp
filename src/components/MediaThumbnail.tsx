@@ -18,11 +18,18 @@ export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '\ud83d\udca
   const ytId = getYouTubeId(youtube || '');
 
   if (ytId) {
+    if (compact) {
+      return (
+        <View style={[styles.compact, { backgroundColor: C.s1 }]}>
+          <Image source={{ uri: getYouTubeThumb(ytId) }} style={styles.compactImg} resizeMode="cover" />
+        </View>
+      );
+    }
     return (
       <>
         <TouchableOpacity onPress={() => setVideoOpen(true)} activeOpacity={0.85}>
-          <View style={[{ borderRadius: radius.md, overflow: 'hidden', marginBottom: 14, backgroundColor: C.s1 }, compact && styles.compact]}>
-            <Image source={{ uri: getYouTubeThumb(ytId) }} style={[styles.img, compact && styles.compactImg]} resizeMode="cover" />
+          <View style={{ borderRadius: radius.md, overflow: 'hidden', marginBottom: 14, backgroundColor: C.s1 }}>
+            <Image source={{ uri: getYouTubeThumb(ytId) }} style={styles.img} resizeMode="cover" />
             <View style={styles.playOverlay}>
               <View style={styles.playBtn}>
                 <Text style={styles.playIcon}>▶️</Text>
