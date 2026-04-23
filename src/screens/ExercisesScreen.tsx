@@ -33,7 +33,7 @@ export default function ExercisesScreen() {
       <View style={styles.searchWrap}>
         <TextInput style={styles.search} placeholder="🔍  Buscar ejercicio..." placeholderTextColor={C.text2} value={query} onChangeText={setQuery} returnKeyType="search" />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: 16, gap: 8 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 6, gap: 8 }}>
         {FILTERS.map(f => (
           <TouchableOpacity key={f} onPress={() => setFilter(f)} style={[styles.chip, filter === f && styles.chipOn]}>
             <Text style={[styles.chipText, filter === f && styles.chipTextOn]}>{f}</Text>
