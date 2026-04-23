@@ -4,11 +4,13 @@ export type FeatureKey =
   | 'tab.exercises'
   | 'tab.routines'
   | 'tab.rehab'
+  | 'tab.content'
   | 'home.quickStart'
   | 'home.weeklyStats'
   | 'home.shortcuts.exercises'
   | 'home.shortcuts.routines'
   | 'home.shortcuts.rehab'
+  | 'home.shortcuts.content'
   | 'workout.supersets'
   | 'workout.restAdjust'
   | 'routine.templates'
@@ -68,13 +70,26 @@ const COACH_LIGHT: ColorPalette = {
   white: '#ffffff', black: '#000000',
 };
 
+const TINCHO_DARK: ColorPalette = {
+  bg: '#0a140a', s1: '#142014', s2: '#1e301e', s3: '#284028',
+  acc: '#6abf6a', acc2: '#a8d8a8', danger: '#ff6b6b',
+  text: '#e8f5e8', text2: '#88aa88', text3: '#556655',
+  white: '#ffffff', black: '#000000',
+};
+const TINCHO_LIGHT: ColorPalette = {
+  bg: '#f0f7f0', s1: '#ffffff', s2: '#e4f0e4', s3: '#d0e8d0',
+  acc: '#2d7a2d', acc2: '#1a5c1a', danger: '#cc2222',
+  text: '#0a1a0a', text2: '#4a6a4a', text3: '#88aa88',
+  white: '#ffffff', black: '#000000',
+};
+
 export const APP_MODES: AppMode[] = [
   {
     id: 'full',
     label: 'Full',
     branding: { appName: 'FitApp', emoji: '💪', tagline: 'Todo en uno' },
     palette: { dark: DARK_C, light: LIGHT_C },
-    features: {},
+    features: { 'tab.content': false },
   },
   {
     id: 'basic',
@@ -86,6 +101,7 @@ export const APP_MODES: AppMode[] = [
       'home.shortcuts.rehab': false,
       'routine.templates': false,
       'workout.supersets': false,
+      'tab.content': false,
     },
   },
   {
@@ -103,6 +119,7 @@ export const APP_MODES: AppMode[] = [
       'settings.import': false,
       'settings.export': false,
       'routine.templates': false,
+      'tab.content': false,
     },
   },
   {
@@ -110,7 +127,16 @@ export const APP_MODES: AppMode[] = [
     label: 'Coach',
     branding: { appName: 'FitCoach', emoji: '🏆', tagline: 'Entrenamiento profesional' },
     palette: { dark: COACH_DARK, light: COACH_LIGHT },
-    features: {},
+    features: { 'tab.content': false },
+  },
+  {
+    id: 'tincho',
+    label: 'Tincho',
+    branding: { appName: 'Profe Tincho', emoji: '🌿', tagline: 'Moverse es un regalo' },
+    palette: { dark: TINCHO_DARK, light: TINCHO_LIGHT },
+    features: {
+      'tab.content': true,
+    },
   },
 ];
 

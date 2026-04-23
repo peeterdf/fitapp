@@ -52,6 +52,7 @@ export default function TabsLayout() {
   const showExercises = useFeature('tab.exercises');
   const showRoutines = useFeature('tab.routines');
   const showRehab = useFeature('tab.rehab');
+  const showContent = useFeature('tab.content');
 
   return (
     <View style={{ flex: 1 }}>
@@ -104,6 +105,15 @@ export default function TabsLayout() {
             tabBarButton: showRehab ? undefined : () => null,
             tabBarIcon: ({ focused }) => <TabIcon emoji="🩹" focused={focused} />,
             tabBarLabel: ({ focused }) => <TabLabel label="Rehab" focused={focused} />,
+          }}
+        />
+        <Tabs.Screen
+          name="content"
+          options={{
+            title: 'Guía',
+            tabBarButton: showContent ? undefined : () => null,
+            tabBarIcon: ({ focused }) => <TabIcon emoji="📖" focused={focused} />,
+            tabBarLabel: ({ focused }) => <TabLabel label="Guía" focused={focused} />,
           }}
         />
       </Tabs>
