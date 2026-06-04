@@ -9,7 +9,7 @@ import { useExercisesContext } from '../contexts/ExercisesContext';
 import { MUSCLE_EMOJIS } from '../data/data';
 import { getYouTubeId } from '../data/utils';
 
-const FILTERS: string[] = ['Todos', 'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core / Abdomen'];
+const FILTERS: string[] = ['Todos', 'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core / Abdomen', 'Full Body'];
 
 export default function ExercisesScreen() {
   const router = useRouter();

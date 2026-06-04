@@ -89,6 +89,9 @@ export default function RoutineDetailScreen() {
               <Text style={styles.exSub}>
                 {item.sets}×{item.reps} · {item.weight} · {item.isSuperset ? 'superset (sin pausa)' : `${item.rest}s pausa`}
               </Text>
+              {!!item.ex!.desc && (
+                <Text style={styles.exDesc} numberOfLines={2}>{item.ex!.desc}</Text>
+              )}
             </View>
             {item.isSuperset && <Text style={styles.ssBadge}>A+B</Text>}
           </View>
@@ -137,6 +140,7 @@ function createStyles(C: ReturnType<typeof useColors>) {
     exEmoji: { fontSize: 28, width: 40, textAlign: 'center' },
     exName: { fontSize: font.md, fontWeight: '700', color: C.text },
     exSub: { fontSize: font.sm, color: C.text2, marginTop: 2 },
+    exDesc: { fontSize: font.xs, color: C.text3, marginTop: 3, lineHeight: 16 },
     ssBadge: { fontSize: font.xs, fontWeight: '800', color: C.acc, backgroundColor: 'rgba(232,255,71,0.13)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
     empty: { alignItems: 'center', marginTop: 80 },
   });
