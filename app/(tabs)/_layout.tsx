@@ -5,21 +5,6 @@ import { useColors } from '../../src/contexts/ThemeContext';
 import { useWorkoutTimer } from '../../src/contexts/WorkoutTimerContext';
 import { useFeature } from '../../src/hooks/useFeature';
 
-function TabIcon({ emoji, focused }: { emoji: string; focused: boolean }) {
-  return (
-    <Text style={{ fontSize: 22, opacity: focused ? 1 : 0.35 }}>{emoji}</Text>
-  );
-}
-
-function TabLabel({ label, focused }: { label: string; focused: boolean }) {
-  const C = useColors();
-  return (
-    <Text style={{ fontSize: 10, color: focused ? C.acc : '#666', fontWeight: focused ? '700' : '400' }}>
-      {label}
-    </Text>
-  );
-}
-
 function WorkoutBanner() {
   const C = useColors();
   const { isActive, elapsed } = useWorkoutTimer();
@@ -64,20 +49,22 @@ export default function TabsLayout() {
             backgroundColor: C.s1,
             borderTopColor: C.s2,
             borderTopWidth: 1,
-            height: 68 + insets.bottom,
-            paddingBottom: insets.bottom + 6,
-            paddingTop: 8,
+            height: 60 + insets.bottom,
+            paddingBottom: insets.bottom + 4,
+            paddingTop: 6,
           },
           tabBarActiveTintColor: C.acc,
           tabBarInactiveTintColor: '#666',
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '600', marginTop: 2 },
         }}
       >
         <Tabs.Screen
           name="index"
           options={{
             title: 'Inicio',
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" focused={focused} />,
-            tabBarLabel: ({ focused }) => <TabLabel label="Inicio" focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🏠</Text>
+            ),
           }}
         />
         <Tabs.Screen
@@ -85,8 +72,9 @@ export default function TabsLayout() {
           options={{
             title: 'Ejercicios',
             tabBarButton: showExercises ? undefined : () => null,
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🏋️" focused={focused} />,
-            tabBarLabel: ({ focused }) => <TabLabel label="Ejercicios" focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🏋️</Text>
+            ),
           }}
         />
         <Tabs.Screen
@@ -94,8 +82,9 @@ export default function TabsLayout() {
           options={{
             title: 'Rutinas',
             tabBarButton: showRoutines ? undefined : () => null,
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📋" focused={focused} />,
-            tabBarLabel: ({ focused }) => <TabLabel label="Rutinas" focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>📋</Text>
+            ),
           }}
         />
         <Tabs.Screen
@@ -103,8 +92,9 @@ export default function TabsLayout() {
           options={{
             title: 'Rehab',
             tabBarButton: showRehab ? undefined : () => null,
-            tabBarIcon: ({ focused }) => <TabIcon emoji="🩹" focused={focused} />,
-            tabBarLabel: ({ focused }) => <TabLabel label="Rehab" focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🩹</Text>
+            ),
           }}
         />
         <Tabs.Screen
@@ -112,8 +102,9 @@ export default function TabsLayout() {
           options={{
             title: 'Guía',
             tabBarButton: showContent ? undefined : () => null,
-            tabBarIcon: ({ focused }) => <TabIcon emoji="📖" focused={focused} />,
-            tabBarLabel: ({ focused }) => <TabLabel label="Guía" focused={focused} />,
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>📖</Text>
+            ),
           }}
         />
       </Tabs>

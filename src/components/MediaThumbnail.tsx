@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Image, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, Image, TouchableOpacity, Text, StyleSheet, Platform, Linking } from 'react-native';
 import { radius } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
 import { getYouTubeId, getYouTubeThumb } from '../data/utils';
@@ -12,10 +12,18 @@ interface Props {
   compact?: boolean;
 }
 
-export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '\ud83d\udcaa', compact = false }: Props) {
+export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '💪', compact = false }: Props) {
   const C = useColors();
   const [videoOpen, setVideoOpen] = useState(false);
   const ytId = getYouTubeId(youtube || '');
+
+  function handlePlay() {
+    if (Platform.OS === 'web') {
+      Linking.openURL(`https://www.youtube.com/watch?v=${ytId}`);
+    } else {
+      setVideoOpen(true);
+    }
+  }
 
   if (ytId) {
     if (compact) {
@@ -27,7 +35,7 @@ export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '\ud83d\udca
     }
     return (
       <>
-        <TouchableOpacity onPress={() => setVideoOpen(true)} activeOpacity={0.85}>
+        <TouchableOpacity onPress={handlePlay} activeOpacity={0.85}>
           <View style={{ borderRadius: radius.md, overflow: 'hidden', marginBottom: 14, backgroundColor: C.s1 }}>
             <Image source={{ uri: getYouTubeThumb(ytId) }} style={styles.img} resizeMode="cover" />
             <View style={styles.playOverlay}>
@@ -37,7 +45,9 @@ export function MediaThumbnail({ youtube, imageUri, fallbackEmoji = '\ud83d\udca
             </View>
           </View>
         </TouchableOpacity>
-        <VideoModal visible={videoOpen} youtubeId={ytId} onClose={() => setVideoOpen(false)} />
+        {Platform.OS !== 'web' && (
+          <VideoModal visible={videoOpen} youtubeId={ytId} onClose={() => setVideoOpen(false)} />
+        )}
       </>
     );
   }
