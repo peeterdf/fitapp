@@ -11,7 +11,7 @@ import { useAppMode } from '../src/contexts/AppModeContext';
 import { useFeature } from '../src/hooks/useFeature';
 import { Exercise, MuscleGroup, Routine, RehabBloque } from '../src/data/types';
 
-type Mode = 'idle' | 'import-ex' | 'import-full';
+type Mode = 'idle' | 'import-ex' | 'import-rt' | 'import-full';
 
 const VALID_MUSCLES: MuscleGroup[] = [
   'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core / Abdomen', 'Full Body',
@@ -88,6 +88,38 @@ export default function SettingsScreen() {
       saveExercises(normalized);
       setJsonText(''); setMode('idle');
       Alert.alert('Éxito', `${normalized.length} ejercicio${normalized.length !== 1 ? 's' : ''} importados.`);
+    } catch {
+      Alert.alert('Error', 'JSON inválido.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function importRoutines() {
+    try {
+      setIsLoading(true);
+      if (!jsonText.trim()) { Alert.alert('Error', 'Pegá el JSON.'); setIsLoading(false); return; }
+      const data = JSON.parse(jsonText);
+      if (!Array.isArray(data)) { Alert.alert('Error', 'El JSON debe ser un array de rutinas.'); setIsLoading(false); return; }
+      const maxId = routines.reduce((m, r) => Math.max(m, r.id), 0);
+      let idCounter = maxId + 1;
+      const incoming: Routine[] = data.filter((r: any) => typeof r === 'object' && r && typeof r.name === 'string' && r.name.trim()).map((r: any) => ({
+        id: typeof r.id === 'number' ? r.id : idCounter++,
+        name: r.name.trim(),
+        desc: r.desc ?? '',
+        days: r.days ?? '',
+        duration: r.duration ?? '',
+        exercises: Array.isArray(r.exercises) ? r.exercises : [],
+      }));
+      if (incoming.length === 0) { Alert.alert('Error', 'No se encontraron rutinas válidas.'); setIsLoading(false); return; }
+      const existingIds = new Set(routines.map(r => r.id));
+      const merged = [
+        ...routines,
+        ...incoming.filter(r => !existingIds.has(r.id)),
+      ];
+      saveRoutines(merged);
+      setJsonText(''); setMode('idle');
+      Alert.alert('Éxito', `${incoming.length} rutina${incoming.length !== 1 ? 's' : ''} importada${incoming.length !== 1 ? 's' : ''}.`);
     } catch {
       Alert.alert('Error', 'JSON inválido.');
     } finally {
@@ -256,6 +288,33 @@ export default function SettingsScreen() {
                     />
                     <View style={styles.buttonRow}>
                       <Btn label="Importar" variant="primary" onPress={importExercises} disabled={isLoading || !jsonText.trim()} />
+                      <Btn label="Cancelar" variant="secondary" onPress={() => { setMode('idle'); setJsonText(''); }} />
+                    </View>
+                  </View>
+                )}
+              </View>
+            </Card>
+
+            <Card>
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>Importar rutinas</Text>
+                <Text style={styles.cardDescription}>
+                  Pegá un array de rutinas. Las que ya existan (mismo id) se omiten.
+                </Text>
+                {mode !== 'import-rt' ? (
+                  <Btn label="📋 Pegar JSON" variant="primary" onPress={() => { setMode('import-rt'); setJsonText(''); }} />
+                ) : (
+                  <View>
+                    <TextInput
+                      style={styles.jsonInput}
+                      placeholder="[ { &quot;id&quot;: 2, &quot;name&quot;: &quot;...&quot;, &quot;exercises&quot;: [...] } ]"
+                      placeholderTextColor={C.text3}
+                      multiline
+                      value={jsonText}
+                      onChangeText={setJsonText}
+                    />
+                    <View style={styles.buttonRow}>
+                      <Btn label="Importar" variant="primary" onPress={importRoutines} disabled={isLoading || !jsonText.trim()} />
                       <Btn label="Cancelar" variant="secondary" onPress={() => { setMode('idle'); setJsonText(''); }} />
                     </View>
                   </View>
