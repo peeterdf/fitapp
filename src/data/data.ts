@@ -361,6 +361,180 @@ export const DEFAULT_EXERCISES: Exercise[] = [
     notes: 'Ayuda para levantar más.',
     youtube: 'https://www.youtube.com/watch?v=2yjwXTZQDDI', imageUri: '', history: [],
   },
+
+  // ── SIN GIMNASIO: PESO CORPORAL + BANDAS ─────────────────────────────────
+
+  // Pecho
+  {
+    id: 43, name: 'Flexiones',
+    desc: 'En posición de plancha, bajás el pecho al suelo flexionando los codos a 45°. Subís de forma explosiva. Cuerpo recto en todo momento.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Pecho', equip: 'Peso corporal', diff: 'Principiante',
+    notes: 'Si no llegás al suelo, apoyá las rodillas.',
+    youtube: 'https://www.youtube.com/watch?v=sbOB8ntbxkI', imageUri: '', history: [],
+  },
+  {
+    id: 44, name: 'Flexiones Diamante',
+    desc: 'Manos juntas formando un diamante bajo el pecho. Codos se cierran hacia atrás al bajar. Mayor activación en tríceps y pecho interno.',
+    sets: 3, reps: '10', weight: '—', rest: 60,
+    muscle: 'Pecho', equip: 'Peso corporal', diff: 'Intermedio',
+    notes: 'Mantener core activo, no dejar caer la cadera.',
+    youtube: 'https://www.youtube.com/watch?v=9vz0yqV55GQ', imageUri: '', history: [],
+  },
+  {
+    id: 45, name: 'Dips en Silla',
+    desc: 'Manos sobre el borde de la silla, pies extendidos. Bajás doblando codos a 90° y subís extendiendo. Trabaja pecho inferior y tríceps.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Pecho', equip: 'Silla', diff: 'Principiante',
+    notes: 'Codos atrás, no hacia afuera.',
+    youtube: 'https://www.youtube.com/watch?v=7VuY1uy5Odw', imageUri: '', history: [],
+  },
+  {
+    id: 46, name: 'Press de Pecho con Banda',
+    desc: 'Pasás la banda larga por detrás de la espalda y la sostenés con ambas manos. Extendés los brazos hacia adelante como un press. Ancla detrás.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Pecho', equip: 'Banda larga de látex', diff: 'Intermedio',
+    notes: 'Elegí la resistencia según tu nivel. Podés hacerlo de pie o sentado.',
+    youtube: 'https://www.youtube.com/watch?v=YVmEWu_Vl8c', imageUri: '', history: [],
+  },
+
+  // Espalda
+  {
+    id: 47, name: 'Remo Invertido (bajo mesa)',
+    desc: 'Acostado bajo una mesa firme, agarrás el borde. Cuerpo recto como tabla. Jalás el pecho hacia la mesa apretando la espalda.',
+    sets: 3, reps: '10', weight: '—', rest: 60,
+    muscle: 'Espalda', equip: 'Mesa resistente', diff: 'Intermedio',
+    notes: 'Cuánto más horizontal el cuerpo, más difícil. Codos cerca del torso.',
+    youtube: 'https://www.youtube.com/watch?v=cczgGh3YdWE', imageUri: '', history: [],
+  },
+  {
+    id: 48, name: 'Superman',
+    desc: 'Boca abajo en el suelo, brazos extendidos. Levantás simultáneamente brazos y piernas apretando la espalda baja y glúteos. Sostener 2 segundos.',
+    sets: 3, reps: '12', weight: '—', rest: 45,
+    muscle: 'Espalda', equip: 'Peso corporal', diff: 'Principiante',
+    notes: 'No forzar el cuello. Mirar al suelo.',
+    youtube: 'https://www.youtube.com/watch?v=LkdmdJLDEOc', imageUri: '', history: [],
+  },
+  {
+    id: 49, name: 'Remo con Banda Larga',
+    desc: 'Pisás la banda con ambos pies, inclinado hacia adelante con espalda recta. Jalás los extremos hacia el abdomen apretando omóplatos.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Espalda', equip: 'Banda larga de látex', diff: 'Principiante',
+    notes: 'Codos pegados al torso. Bajar controlado.',
+    youtube: 'https://www.youtube.com/watch?v=9qWjvfkpbro', imageUri: '', history: [],
+  },
+
+  // Piernas
+  {
+    id: 50, name: 'Sentadilla con Peso Corporal',
+    desc: 'Pies al ancho de hombros, puntas levemente abiertas. Bajás como si fueras a sentarte, rodillas alineadas con pies. Espalda recta, core activo.',
+    sets: 3, reps: '15', weight: '—', rest: 60,
+    muscle: 'Piernas', equip: 'Peso corporal', diff: 'Principiante',
+    notes: 'Talones en el suelo en todo momento.',
+    youtube: 'https://www.youtube.com/watch?v=G5MkBg97nmI', imageUri: '', history: [],
+  },
+  {
+    id: 51, name: 'Zancada Alternada',
+    desc: 'Dás un paso largo hacia adelante, bajás la rodilla trasera cerca del suelo y volvés. Alternás piernas. Tronco erecto.',
+    sets: 3, reps: '10', weight: '—', rest: 60,
+    muscle: 'Piernas', equip: 'Peso corporal', diff: 'Principiante',
+    notes: 'Rodilla delantera no pasa la punta del pie.',
+    youtube: 'https://www.youtube.com/watch?v=39R77fLS7II', imageUri: '', history: [],
+  },
+  {
+    id: 52, name: 'Sentadilla Búlgara',
+    desc: 'Pie trasero apoyado en una silla. Pie delantero adelantado. Bajás en sentadilla unilateral. Requiere equilibrio y fuerza de una sola pierna.',
+    sets: 3, reps: '8', weight: '—', rest: 90,
+    muscle: 'Piernas', equip: 'Silla', diff: 'Intermedio',
+    notes: 'Empujar desde el talón delantero. Mismo peso en ambos lados.',
+    youtube: 'https://www.youtube.com/watch?v=K-6DG1hcHzU', imageUri: '', history: [],
+  },
+  {
+    id: 53, name: 'Hip Thrust con Hip Band',
+    desc: 'Espalda apoyada en el borde de la silla, hip band sobre los muslos. Empujás las caderas hacia arriba apretando glúteos al máximo. Bajás controlado.',
+    sets: 3, reps: '15', weight: '—', rest: 60,
+    muscle: 'Piernas', equip: 'Hip band de tela', diff: 'Intermedio',
+    notes: 'Apretar glúteos 1 segundo arriba. La band activa la abducción.',
+    youtube: 'https://www.youtube.com/watch?v=cJMIxt9GK3Y', imageUri: '', history: [],
+  },
+  {
+    id: 54, name: 'Patada de Glúteo con Mini Loop',
+    desc: 'A cuatro patas con el mini loop en los muslos. Extendés una pierna hacia atrás y arriba contrayendo el glúteo. Volvés sin tocar el suelo.',
+    sets: 3, reps: '15', weight: '—', rest: 45,
+    muscle: 'Piernas', equip: 'Mini loop de látex', diff: 'Principiante',
+    notes: 'No rotar la cadera. Pie en flexión (flexed foot).',
+    youtube: 'https://www.youtube.com/watch?v=YXLW2iKPDu4', imageUri: '', history: [],
+  },
+  {
+    id: 55, name: 'Abducción de Cadera con Mini Loop',
+    desc: 'De pie o acostado de costado, mini loop sobre las rodillas o tobillos. Abrís las piernas venciendo la resistencia de la banda. Lento y controlado.',
+    sets: 3, reps: '15', weight: '—', rest: 45,
+    muscle: 'Piernas', equip: 'Mini loop de látex', diff: 'Principiante',
+    notes: 'Elegí el nivel de resistencia del mini loop según tu nivel.',
+    youtube: 'https://www.youtube.com/watch?v=u2p6nH7WEhE', imageUri: '', history: [],
+  },
+
+  // Hombros
+  {
+    id: 56, name: 'Pike Push-Up',
+    desc: 'Posición de plancha con caderas bien arriba (forma de V invertida). Doblás los codos llevando la cabeza hacia el suelo y empujás hacia arriba. Trabaja hombros.',
+    sets: 3, reps: '10', weight: '—', rest: 60,
+    muscle: 'Hombros', equip: 'Peso corporal', diff: 'Intermedio',
+    notes: 'Cuanto más vertical el torso, más difícil. Progresión hacia el handstand push-up.',
+    youtube: 'https://www.youtube.com/watch?v=XckEEwa1BPI', imageUri: '', history: [],
+  },
+  {
+    id: 57, name: 'Elevación Lateral con Banda',
+    desc: 'Pisás la banda larga con ambos pies, sostenés los extremos cruzados. Elevás los brazos lateralmente hasta paralelo al suelo. Bajás lento.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Hombros', equip: 'Banda larga de látex', diff: 'Principiante',
+    notes: 'Codos ligeramente flexionados. No elevar por encima de los hombros.',
+    youtube: 'https://www.youtube.com/watch?v=26GTut2vuso', imageUri: '', history: [],
+  },
+
+  // Brazos
+  {
+    id: 58, name: 'Curl de Bíceps con Banda',
+    desc: 'Pisás la banda larga, sostenés los extremos con palmas hacia arriba. Flexionás los codos llevando manos a los hombros. Bajás controlado.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Brazos', equip: 'Banda larga de látex', diff: 'Principiante',
+    notes: 'Codos pegados al torso. No usar impulso de cintura.',
+    youtube: 'https://www.youtube.com/watch?v=yop7qSNx6ts', imageUri: '', history: [],
+  },
+  {
+    id: 59, name: 'Curl Martillo con Banda',
+    desc: 'Igual que el curl pero con palmas enfrentadas (neutro). Trabaja más el braquial y antebrazo. Pisás la banda y curvás controlado.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Brazos', equip: 'Banda larga de látex', diff: 'Principiante',
+    notes: 'Muñecas neutras en todo momento.',
+    youtube: 'https://www.youtube.com/watch?v=5J9CtDQolhA', imageUri: '', history: [],
+  },
+  {
+    id: 60, name: 'Extensión de Tríceps con Banda (Overhead)',
+    desc: 'Pisás la banda, llevás un extremo detrás de la cabeza con una o dos manos. Extendés los codos hacia arriba. Bajás lento sin mover los codos.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Brazos', equip: 'Banda larga de látex', diff: 'Intermedio',
+    notes: 'Codos apuntan al frente. No abrirlos al bajar.',
+    youtube: 'https://www.youtube.com/watch?v=XjRtPHS_UwM', imageUri: '', history: [],
+  },
+  {
+    id: 61, name: 'Fondos de Tríceps en Silla',
+    desc: 'Manos sobre el borde de la silla detrás de vos, pies en el suelo. Bajás doblando codos hasta 90° y empujás hacia arriba extendiendo los tríceps.',
+    sets: 3, reps: '12', weight: '—', rest: 60,
+    muscle: 'Brazos', equip: 'Silla', diff: 'Principiante',
+    notes: 'Codos apuntan hacia atrás, no a los lados. Espalda cerca de la silla.',
+    youtube: 'https://www.youtube.com/watch?v=R9TzSqoDMBw', imageUri: '', history: [],
+  },
+
+  // Full Body
+  {
+    id: 62, name: 'Burpees',
+    desc: 'De pie, bajás al suelo, hacés una flexión, saltás los pies hacia las manos, te incorporás y saltás con brazos arriba. Todo sin pausa.',
+    sets: 3, reps: '10', weight: '—', rest: 90,
+    muscle: 'Full Body', equip: 'Peso corporal', diff: 'Intermedio',
+    notes: 'Ritmo sostenido. Podés eliminar la flexión si sos principiante.',
+    youtube: 'https://www.youtube.com/watch?v=qLBImHhCXSw', imageUri: '', history: [],
+  },
 ];
 
 export const ROUTINE_FUERZA_A: RoutineExercise[] = [
@@ -376,6 +550,58 @@ export const DEFAULT_ROUTINES: Routine[] = [
   {
     id: 1, name: 'Fuerza A — Upper', desc: 'Upper body enfocado en fuerza. Progresión lineal cada sesión.',
     days: 'Lun / Jue', duration: '45-55', exercises: ROUTINE_FUERZA_A,
+  },
+  {
+    id: 2, name: 'Sin Gimnasio: Full Body',
+    desc: 'Entrená todo el cuerpo sin equipo ni gimnasio. Solo peso corporal y bandas.',
+    days: 'Lun / Mié / Vie', duration: '35-45',
+    exercises: [
+      { exId: 50, sets: 3, reps: '15', weight: '—', rest: 60 },
+      { exId: 43, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 47, sets: 3, reps: '10', weight: '—', rest: 60 },
+      { exId: 56, sets: 3, reps: '10', weight: '—', rest: 60 },
+      { exId: 62, sets: 3, reps: '10', weight: '—', rest: 90 },
+      { exId: 48, sets: 3, reps: '12', weight: '—', rest: 45 },
+    ],
+  },
+  {
+    id: 3, name: 'Sin Gimnasio: Brazos',
+    desc: 'Bíceps y tríceps con bandas largas y peso corporal. Sin equipo de gimnasio.',
+    days: 'Mar / Jue', duration: '30-40',
+    exercises: [
+      { exId: 58, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 59, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 60, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 61, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 44, sets: 3, reps: '10', weight: '—', rest: 60 },
+      { exId: 45, sets: 3, reps: '12', weight: '—', rest: 60 },
+    ],
+  },
+  {
+    id: 4, name: 'Sin Gimnasio: Piernas',
+    desc: 'Cuádriceps, isquios y glúteos con peso corporal, mini loops y hip bands.',
+    days: 'Lun / Jue', duration: '35-45',
+    exercises: [
+      { exId: 50, sets: 3, reps: '15', weight: '—', rest: 60 },
+      { exId: 51, sets: 3, reps: '10', weight: '—', rest: 60 },
+      { exId: 52, sets: 3, reps: '8', weight: '—', rest: 90 },
+      { exId: 53, sets: 3, reps: '15', weight: '—', rest: 60 },
+      { exId: 54, sets: 3, reps: '15', weight: '—', rest: 45 },
+      { exId: 55, sets: 3, reps: '15', weight: '—', rest: 45 },
+    ],
+  },
+  {
+    id: 5, name: 'Sin Gimnasio: Upper',
+    desc: 'Pecho, espalda y hombros sin ir al gimnasio. Bandas largas y peso corporal.',
+    days: 'Mar / Vie', duration: '35-45',
+    exercises: [
+      { exId: 43, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 46, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 47, sets: 3, reps: '10', weight: '—', rest: 60 },
+      { exId: 49, sets: 3, reps: '12', weight: '—', rest: 60 },
+      { exId: 56, sets: 3, reps: '10', weight: '—', rest: 60 },
+      { exId: 57, sets: 3, reps: '12', weight: '—', rest: 60 },
+    ],
   },
 ];
 
