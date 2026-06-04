@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, FlatList } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
@@ -33,13 +33,13 @@ export default function ExercisesScreen() {
       <View style={styles.searchWrap}>
         <TextInput style={styles.search} placeholder="🔍  Buscar ejercicio..." placeholderTextColor={C.text2} value={query} onChangeText={setQuery} returnKeyType="search" />
       </View>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 6, gap: 8 }}>
+      <View style={styles.filterRow}>
         {FILTERS.map(f => (
           <TouchableOpacity key={f} onPress={() => setFilter(f)} style={[styles.chip, filter === f && styles.chipOn]}>
             <Text style={[styles.chipText, filter === f && styles.chipTextOn]}>{f}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
       <FlatList
         data={filtered}
         keyExtractor={ex => String(ex.id)}
@@ -86,7 +86,7 @@ function createStyles(C: ReturnType<typeof useColors>) {
     title: { fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
     searchWrap: { marginHorizontal: 16, marginBottom: 10 },
     search: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 10, fontSize: font.md, color: C.text },
-    filterScroll: { flexGrow: 0, marginBottom: 10 },
+    filterRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 16, gap: 8, marginBottom: 10 },
     chip: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 16, paddingVertical: 6, borderWidth: 1.5, borderColor: 'transparent' },
     chipOn: { backgroundColor: 'rgba(232,255,71,0.12)', borderColor: 'rgba(232,255,71,0.3)' },
     chipText: { fontSize: font.sm, color: C.text2 },

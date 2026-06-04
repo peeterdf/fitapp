@@ -194,6 +194,9 @@ export default function WorkoutScreen() {
               )}
               <Text style={styles.heroName}>{ex.name}</Text>
               <Text style={styles.heroInfo}>{ex.wWeight} · Serie {ex.currentSet} de {ex.wSets}</Text>
+              {!!ex.desc && (
+                <Text style={styles.heroDesc} numberOfLines={3}>{ex.desc}</Text>
+              )}
 
               {(ex.youtube || ex.imageUri) && (
                 <MediaThumbnail youtube={ex.youtube} imageUri={ex.imageUri} fallbackEmoji="" compact={false} />
@@ -328,7 +331,8 @@ function createStyles(C: ReturnType<typeof useColors>) {
     scroll: { flex: 1, paddingHorizontal: 16 },
     hero: { backgroundColor: C.s1, borderRadius: radius.lg, padding: 16, marginTop: 8, marginBottom: 10 },
     heroName: { fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 4, textAlign: 'center' },
-    heroInfo: { fontSize: font.md, color: C.text2, marginBottom: 12, textAlign: 'center' },
+    heroInfo: { fontSize: font.md, color: C.text2, marginBottom: 8, textAlign: 'center' },
+    heroDesc: { fontSize: font.sm, color: C.text2, lineHeight: 18, marginBottom: 12, textAlign: 'center', paddingHorizontal: 4 },
     heroActions: { flexDirection: 'row', gap: 10, marginTop: 12 },
     mainBtn: { flex: 1, backgroundColor: C.acc, borderRadius: radius.sm, paddingVertical: 13, alignItems: 'center' },
     mainBtnText: { fontSize: font.md, fontWeight: '800', color: '#0f0f0f' },
