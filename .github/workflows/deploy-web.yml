@@ -26,6 +26,8 @@ jobs:
 
       - run: npm ci
 
+      - run: npx expo install react-native-web react-dom
+
       - run: npx expo export --platform web
         env:
           NODE_ENV: production
