@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Exercise } from '../data/types';
 import { DEFAULT_EXERCISES } from '../data/data';
 
-const KEY = 'fitapp_exercises_v2';
+const KEY = 'fitapp_exercises_v3';
 
 export function useExercises() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
