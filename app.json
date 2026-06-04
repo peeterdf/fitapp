@@ -35,8 +35,13 @@
       ]
     ],
     "scheme": "fitapp",
+    "web": {
+      "output": "static",
+      "bundler": "metro"
+    },
     "experiments": {
-      "typedRoutes": true
+      "typedRoutes": true,
+      "baseUrl": "/fitapp"
     },
     "extra": {
       "router": {
