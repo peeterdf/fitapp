@@ -40,7 +40,7 @@ export default function WorkoutFinishScreen() {
             ))}
           </View>
         </View>
-        <Btn label="Volver al inicio" onPress={() => router.replace('/')} />
+        <Btn label="Volver al inicio" onPress={() => router.push('/')} />
         <View style={{ height: 40 }} />
       </ScrollView>
     </View>

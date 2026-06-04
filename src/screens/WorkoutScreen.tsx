@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Vibration } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { radius, font } from '../data/theme';
@@ -14,6 +14,7 @@ import { MUSCLE_EMOJIS } from '../data/data';
 import { Exercise, RoutineExercise } from '../data/types';
 import { fmtTime } from '../data/utils';
 import { useFeature } from '../hooks/useFeature';
+import { confirm, toast, safeVibrate } from '../utils/webCompat';
 
 interface WorkoutItem extends Exercise {
   wSets: number;
@@ -47,10 +48,10 @@ export default function WorkoutScreen() {
   const canSuperset = useFeature('workout.supersets');
 
   useEffect(() => {
-    activateKeepAwakeAsync();
+    if (Platform.OS !== 'web') activateKeepAwakeAsync().catch(() => {});
     startWorkout();
     return () => {
-      deactivateKeepAwake();
+      if (Platform.OS !== 'web') deactivateKeepAwake();
       stopWorkout();
     };
   }, []);
@@ -83,11 +84,8 @@ export default function WorkoutScreen() {
       }).filter(Boolean) as WorkoutItem[];
     }
     if (!list.length) {
-      Alert.alert(
-        'Sin ejercicios',
-        'Esta rutina no tiene ejercicios configurados. Agregá al menos uno antes de empezar.',
-        [{ text: 'OK', onPress: () => router.back() }],
-      );
+      toast('Sin ejercicios', 'Esta rutina no tiene ejercicios configurados. Agregá al menos uno antes de empezar.');
+      router.back();
       return;
     }
     setItems(list);
@@ -101,14 +99,14 @@ export default function WorkoutScreen() {
   const startPause = useCallback((secs: number, cb: () => void, label: 'serie' | 'ejercicio' = 'serie') => {
     setPauseLabel(label);
     setMode('pause');
-    Vibration.vibrate(200);
+    safeVibrate(200);
     countdown.start(secs);
     cbRef.current = cb;
   }, []);
 
   useEffect(() => {
     if (countdown.seconds === 0 && !countdown.running && mode === 'pause' && cbRef.current) {
-      Vibration.vibrate([0, 100, 100, 100]);
+      safeVibrate([0, 100, 100, 100]);
       setMode('exercise');
       cbRef.current();
       cbRef.current = null;
@@ -147,7 +145,7 @@ export default function WorkoutScreen() {
       if (nextIdx >= items.length) {
         finishWorkout(newDone, items.length);
       } else if (ex.isSuperset) {
-        Vibration.vibrate(200);
+        safeVibrate(200);
         setIdx(nextIdx);
       } else if (ex.wRestAfterEx === 0) {
         setIdx(nextIdx);
@@ -169,10 +167,7 @@ export default function WorkoutScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => Alert.alert('Terminar', '¿Querés terminar el entrenamiento?', [
-          { text: 'No' },
-          { text: 'Sí', style: 'destructive', onPress: () => { clock.stop(); stopWorkout(); router.back(); } },
-        ])} style={styles.closeBtn}>
+        <TouchableOpacity onPress={() => confirm('Terminar', '¿Querés terminar el entrenamiento?', () => { clock.stop(); stopWorkout(); router.back(); })} style={styles.closeBtn}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
         <Text style={styles.subtitle}>Ejercicio {idx + 1} de {items.length}</Text>
@@ -308,10 +303,7 @@ export default function WorkoutScreen() {
         <Btn
           label="Terminar entrenamiento"
           variant="danger"
-          onPress={() => Alert.alert('Terminar', '¿Seguro?', [
-            { text: 'No' },
-            { text: 'Sí', style: 'destructive', onPress: () => { clock.stop(); stopWorkout(); router.back(); } },
-          ])}
+          onPress={() => confirm('Terminar', '¿Seguro?', () => { clock.stop(); stopWorkout(); router.back(); })}
         />
         <View style={{ height: 40 }} />
       </ScrollView>

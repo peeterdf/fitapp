@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, TextInput, Share, Switch } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView, TextInput, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
 import { radius, font } from '../src/data/theme';
 import { useColors, useTheme } from '../src/contexts/ThemeContext';
@@ -10,6 +10,7 @@ import { useRehabContext } from '../src/contexts/RehabContext';
 import { useAppMode } from '../src/contexts/AppModeContext';
 import { useFeature } from '../src/hooks/useFeature';
 import { Exercise, MuscleGroup, Routine, RehabBloque } from '../src/data/types';
+import { confirm, toast, shareOrDownloadJson } from '../src/utils/webCompat';
 
 type Mode = 'idle' | 'import-ex' | 'import-full';
 
@@ -66,30 +67,27 @@ export default function SettingsScreen() {
         rehab: bloques,
       };
       const json = JSON.stringify(backup, null, 2);
-      await Share.share({
-        message: json,
-        title: 'fitapp-backup.json',
-      });
+      await shareOrDownloadJson(json, 'fitapp-backup.json');
     } catch (err) {
-      Alert.alert('Error', 'No se pudo exportar el backup.');
+      toast('Error', 'No se pudo exportar el backup.');
     }
   }
 
   function importExercises() {
     try {
       setIsLoading(true);
-      if (!jsonText.trim()) { Alert.alert('Error', 'Pegá el JSON.'); setIsLoading(false); return; }
+      if (!jsonText.trim()) { toast('Error', 'Pegá el JSON.'); setIsLoading(false); return; }
       const data = JSON.parse(jsonText);
-      if (!Array.isArray(data)) { Alert.alert('Error', 'El JSON debe ser un array.'); setIsLoading(false); return; }
+      if (!Array.isArray(data)) { toast('Error', 'El JSON debe ser un array.'); setIsLoading(false); return; }
       const maxId = exercises.reduce((m, e) => Math.max(m, e.id), 0);
       let idCounter = maxId + 1;
       const normalized = data.map(raw => normalizeExercise(raw, idCounter++)).filter(Boolean) as Exercise[];
-      if (normalized.length === 0) { Alert.alert('Error', 'No se encontraron ejercicios válidos.'); setIsLoading(false); return; }
+      if (normalized.length === 0) { toast('Error', 'No se encontraron ejercicios válidos.'); setIsLoading(false); return; }
       saveExercises(normalized);
       setJsonText(''); setMode('idle');
-      Alert.alert('Éxito', `${normalized.length} ejercicio${normalized.length !== 1 ? 's' : ''} importados.`);
+      toast('Éxito', `${normalized.length} ejercicio${normalized.length !== 1 ? 's' : ''} importados.`);
     } catch {
-      Alert.alert('Error', 'JSON inválido.');
+      toast('Error', 'JSON inválido.');
     } finally {
       setIsLoading(false);
     }
@@ -98,43 +96,33 @@ export default function SettingsScreen() {
   function importFullBackup() {
     try {
       setIsLoading(true);
-      if (!jsonText.trim()) { Alert.alert('Error', 'Pegá el JSON.'); setIsLoading(false); return; }
+      if (!jsonText.trim()) { toast('Error', 'Pegá el JSON.'); setIsLoading(false); return; }
       const data = JSON.parse(jsonText);
-      if (typeof data !== 'object' || !data) { Alert.alert('Error', 'Formato inválido.'); setIsLoading(false); return; }
+      if (typeof data !== 'object' || !data) { toast('Error', 'Formato inválido.'); setIsLoading(false); return; }
 
       const hasExercises = Array.isArray(data.exercises);
       const hasRoutines = Array.isArray(data.routines);
       const hasRehab = Array.isArray(data.rehab);
 
       if (!hasExercises && !hasRoutines && !hasRehab) {
-        Alert.alert('Error', 'El backup no contiene datos válidos. Esperaba "exercises", "routines" o "rehab".');
+        toast('Error', 'El backup no contiene datos válidos. Esperaba "exercises", "routines" o "rehab".');
         setIsLoading(false); return;
       }
 
-      Alert.alert(
-        'Confirmar importación',
-        `Se reemplazará:\n${hasExercises ? `• ${data.exercises.length} ejercicios\n` : ''}${hasRoutines ? `• ${data.routines.length} rutinas\n` : ''}${hasRehab ? `• ${data.rehab.length} bloques rehab\n` : ''}\nLos datos actuales se perderán.`,
-        [
-          { text: 'Cancelar' },
-          {
-            text: 'Reemplazar',
-            style: 'destructive',
-            onPress: () => {
-              if (hasExercises) {
-                let idCounter = 1;
-                const exs = (data.exercises as any[]).map(raw => normalizeExercise(raw, idCounter++)).filter(Boolean) as Exercise[];
-                saveExercises(exs);
-              }
-              if (hasRoutines) saveRoutines(data.routines as Routine[]);
-              if (hasRehab) saveRehab(data.rehab as RehabBloque[]);
-              setJsonText(''); setMode('idle');
-              Alert.alert('Éxito', 'Backup importado correctamente.');
-            },
-          },
-        ]
-      );
+      const msg = `Se reemplazará:\n${hasExercises ? `• ${data.exercises.length} ejercicios\n` : ''}${hasRoutines ? `• ${data.routines.length} rutinas\n` : ''}${hasRehab ? `• ${data.rehab.length} bloques rehab\n` : ''}\nLos datos actuales se perderán.`;
+      confirm('Confirmar importación', msg, () => {
+        if (hasExercises) {
+          let idCounter = 1;
+          const exs = (data.exercises as any[]).map(raw => normalizeExercise(raw, idCounter++)).filter(Boolean) as Exercise[];
+          saveExercises(exs);
+        }
+        if (hasRoutines) saveRoutines(data.routines as Routine[]);
+        if (hasRehab) saveRehab(data.rehab as RehabBloque[]);
+        setJsonText(''); setMode('idle');
+        toast('Éxito', 'Backup importado correctamente.');
+      });
     } catch {
-      Alert.alert('Error', 'JSON inválido.');
+      toast('Error', 'JSON inválido.');
     } finally {
       setIsLoading(false);
     }
