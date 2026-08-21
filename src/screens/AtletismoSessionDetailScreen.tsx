@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
@@ -8,6 +8,7 @@ import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoExercise, AtletismoFase } from '../data/atletismoTypes';
 import { generarFitDeSesion } from '../utils/atletismoFitExport';
 import { shareFitWorkout } from '../utils/atletismoFitShare';
+import { toast } from '../utils/webCompat';
 
 const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   fondo: '🏞️',
@@ -51,7 +52,7 @@ export default function AtletismoSessionDetailScreen() {
       const bytes = generarFitDeSesion(sesion!, plan!.ritmos);
       await shareFitWorkout(bytes, `${sesion!.nombre} ${sesion!.fecha}`);
     } catch (e) {
-      Alert.alert('No se pudo exportar', e instanceof Error ? e.message : 'Error desconocido.');
+      toast('No se pudo exportar', e instanceof Error ? e.message : 'Error desconocido.');
     } finally {
       setEnviando(false);
     }

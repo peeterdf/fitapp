@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 
@@ -34,10 +35,28 @@ function slugify(name: string): string {
 }
 
 export async function shareFitWorkout(bytes: Uint8Array, workoutName: string): Promise<void> {
+  const filename = `${slugify(workoutName)}.fit`;
+
+  // expo-sharing / expo-file-system's native file APIs aren't available on
+  // web — download the file directly via a Blob instead (same pattern as
+  // webCompat.shareOrDownloadJson).
+  if (Platform.OS === 'web') {
+    const blob = new Blob([bytes], { type: 'application/vnd.ant.fit' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
+
   const available = await Sharing.isAvailableAsync();
   if (!available) throw new Error('Compartir archivos no está disponible en este dispositivo.');
 
-  const uri = `${FileSystem.cacheDirectory}${slugify(workoutName)}.fit`;
+  const uri = `${FileSystem.cacheDirectory}${filename}`;
   await FileSystem.writeAsStringAsync(uri, base64Encode(bytes), { encoding: FileSystem.EncodingType.Base64 });
   await Sharing.shareAsync(uri, {
     mimeType: 'application/vnd.ant.fit',
