@@ -101,15 +101,17 @@ export default function AtletismoSessionDetailScreen() {
         </PhaseCard>
 
         <Btn
-          label={enviando ? 'Generando...' : '⌚ Enviar a Garmin (.FIT)'}
+          label={enviando ? 'Generando...' : '⌚ Exportar entrenamiento (.FIT)'}
           onPress={enviarAGarmin}
           disabled={enviando}
           style={{ marginTop: 8 }}
         />
         <Text style={styles.garminHint}>
-          Genera el entrenamiento estructurado como archivo .FIT y abre el panel para compartirlo.
-          Para llevarlo al reloj: transferilo con Garmin Express, o copialo por USB a la carpeta
-          GARMIN/NewFiles del dispositivo.
+          La app Garmin Connect no acepta archivos .FIT de entrenamiento sueltos (solo
+          actividades ya completadas). Para llevar este entrenamiento al reloj: conectalo
+          por USB a la compu, copiá el archivo .FIT a la carpeta GARMIN/NewFiles del
+          dispositivo, desconectá y reiniciá el reloj si no aparece — Garmin lo mueve solo a
+          Entrenar / Entrenamientos.
         </Text>
       </ScrollView>
     </View>
