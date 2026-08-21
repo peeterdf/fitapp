@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
-import { Badge, Loading } from '../components/UI';
+import { Badge, Btn, Loading } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoExercise, AtletismoFase } from '../data/atletismoTypes';
+import { generarFitDeSesion } from '../utils/atletismoFitExport';
+import { shareFitWorkout } from '../utils/atletismoFitShare';
 
 const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   fondo: '🏞️',
@@ -37,10 +39,23 @@ export default function AtletismoSessionDetailScreen() {
 
   const plan = planId ? plans.find(p => p.id === Number(planId)) : undefined;
   const sesion = plan?.semanas.flatMap(s => s.sesiones).find(s => s.id === Number(sessionId));
+  const [enviando, setEnviando] = useState(false);
 
   if (!plan || !sesion) return <Loading />;
 
   const c = sesion.cuerpo;
+
+  async function enviarAGarmin() {
+    setEnviando(true);
+    try {
+      const bytes = generarFitDeSesion(sesion!, plan!.ritmos);
+      await shareFitWorkout(bytes, `${sesion!.nombre} ${sesion!.fecha}`);
+    } catch (e) {
+      Alert.alert('No se pudo exportar', e instanceof Error ? e.message : 'Error desconocido.');
+    } finally {
+      setEnviando(false);
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -83,6 +98,18 @@ export default function AtletismoSessionDetailScreen() {
           <Row C={C} label="Duración" value={`${sesion.enfriamiento.tiempoMin} min`} />
           <Text style={styles.phaseDesc}>{sesion.enfriamiento.desc}</Text>
         </PhaseCard>
+
+        <Btn
+          label={enviando ? 'Generando...' : '⌚ Enviar a Garmin (.FIT)'}
+          onPress={enviarAGarmin}
+          disabled={enviando}
+          style={{ marginTop: 8 }}
+        />
+        <Text style={styles.garminHint}>
+          Genera el entrenamiento estructurado como archivo .FIT y abre el panel para compartirlo.
+          Para llevarlo al reloj: transferilo con Garmin Express, o copialo por USB a la carpeta
+          GARMIN/NewFiles del dispositivo.
+        </Text>
       </ScrollView>
     </View>
   );
@@ -121,5 +148,6 @@ function createStyles(C: ReturnType<typeof useColors>) {
     phaseCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
     phaseTitle: { color: C.text, fontSize: font.md, fontWeight: '800', marginBottom: 4 },
     phaseDesc: { color: C.text2, fontSize: font.sm, marginTop: 8, lineHeight: 19 },
+    garminHint: { color: C.text3, fontSize: font.xs, marginTop: 8, fontStyle: 'italic', lineHeight: 16 },
   });
 }
