@@ -4,6 +4,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ExercisesProvider } from '../src/contexts/ExercisesContext';
 import { RoutinesProvider } from '../src/contexts/RoutinesContext';
 import { RehabProvider } from '../src/contexts/RehabContext';
+import { AtletismoProvider } from '../src/contexts/AtletismoContext';
 import { AppModeProvider } from '../src/contexts/AppModeContext';
 import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext';
 import { WorkoutTimerProvider } from '../src/contexts/WorkoutTimerContext';
@@ -26,6 +27,8 @@ function AppStack() {
         <Stack.Screen name="new-routine" options={{ headerShown: false }} />
         <Stack.Screen name="rehab-bloque" options={{ headerShown: false }} />
         <Stack.Screen name="new-rehab" options={{ headerShown: false }} />
+        <Stack.Screen name="new-atletismo-plan" options={{ headerShown: false }} />
+        <Stack.Screen name="atletismo-plan-detail" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
       </Stack>
     </>
@@ -42,7 +45,9 @@ export default function RootLayout() {
             <ExercisesProvider>
               <RoutinesProvider>
                 <RehabProvider>
-                  <AppStack />
+                  <AtletismoProvider>
+                    <AppStack />
+                  </AtletismoProvider>
                 </RehabProvider>
               </RoutinesProvider>
             </ExercisesProvider>

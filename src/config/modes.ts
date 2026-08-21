@@ -5,6 +5,7 @@ export type FeatureKey =
   | 'tab.routines'
   | 'tab.rehab'
   | 'tab.content'
+  | 'tab.atletismo'
   | 'home.quickStart'
   | 'home.weeklyStats'
   | 'home.shortcuts.exercises'

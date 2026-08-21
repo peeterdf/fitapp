@@ -38,6 +38,7 @@ export default function TabsLayout() {
   const showRoutines = useFeature('tab.routines');
   const showRehab = useFeature('tab.rehab');
   const showContent = useFeature('tab.content');
+  const showAtletismo = useFeature('tab.atletismo');
 
   return (
     <View style={{ flex: 1 }}>
@@ -104,6 +105,16 @@ export default function TabsLayout() {
             tabBarButton: showContent ? undefined : () => null,
             tabBarIcon: ({ focused }) => (
               <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>📖</Text>
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="atletismo"
+          options={{
+            title: 'Atletismo',
+            tabBarButton: showAtletismo ? undefined : () => null,
+            tabBarIcon: ({ focused }) => (
+              <Text style={{ fontSize: 20, opacity: focused ? 1 : 0.4 }}>🏃</Text>
             ),
           }}
         />
