@@ -88,7 +88,12 @@ export default function AtletismoPlanDetailScreen() {
             {semana.sesiones.length === 0 ? (
               <Text style={styles.noSesiones}>Sin sesiones esta semana.</Text>
             ) : semana.sesiones.map(sesion => (
-              <View key={sesion.id} style={styles.sesionRow}>
+              <TouchableOpacity
+                key={sesion.id}
+                style={styles.sesionRow}
+                activeOpacity={0.8}
+                onPress={() => router.push({ pathname: '/atletismo-session-detail', params: { planId: String(plan.id), sessionId: String(sesion.id) } } as any)}
+              >
                 <Text style={styles.sesionEmoji}>{TIPO_EMOJI[sesion.tipo]}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.sesionNombre}>{sesion.nombre} · {sesion.dia} ({sesion.fecha})</Text>
@@ -97,7 +102,8 @@ export default function AtletismoPlanDetailScreen() {
                     Calor: {sesion.entrada_en_calor.distanciaKm} km · Total est.: {sesion.distanciaTotalKm} km
                   </Text>
                 </View>
-              </View>
+                <Text style={styles.sesionArrow}>›</Text>
+              </TouchableOpacity>
             ))}
           </View>
         ))}
@@ -140,5 +146,6 @@ function createStyles(C: ReturnType<typeof useColors>) {
     sesionNombre: { color: C.text, fontSize: font.sm, fontWeight: '800' },
     sesionDesc: { color: C.text2, fontSize: font.xs, marginTop: 2 },
     sesionMeta: { color: C.text3, fontSize: font.xs, marginTop: 4 },
+    sesionArrow: { color: C.text3, fontSize: 22, alignSelf: 'center' },
   });
 }
