@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
 import { Badge, Loading } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoExercise, AtletismoFase } from '../data/atletismoTypes';
+import { confirm } from '../utils/webCompat';
 
 const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   fondo: '🏞️',
@@ -43,10 +44,10 @@ export default function AtletismoPlanDetailScreen() {
   const totalKm = Math.round(plan.semanas.reduce((acc, s) => acc + s.kilometrajeTotalKm, 0));
 
   function askDelete() {
-    Alert.alert('Eliminar plan', '¿Eliminar este plan de atletismo?', [
-      { text: 'Cancelar' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => { deletePlan(plan!.id); router.back(); } },
-    ]);
+    confirm('Eliminar plan', '¿Eliminar este plan de atletismo?', () => {
+      deletePlan(plan!.id);
+      router.back();
+    });
   }
 
   return (
