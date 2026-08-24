@@ -30,6 +30,7 @@ function AppStack() {
         <Stack.Screen name="new-atletismo-plan" options={{ headerShown: false }} />
         <Stack.Screen name="atletismo-plan-detail" options={{ headerShown: false }} />
         <Stack.Screen name="atletismo-session-detail" options={{ headerShown: false }} />
+        <Stack.Screen name="edit-atletismo-session" options={{ headerShown: false }} />
         <Stack.Screen name="settings" options={{ headerShown: false }} />
       </Stack>
     </>

@@ -5,8 +5,9 @@ import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
 import { Badge, Loading } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
-import { AtletismoExercise, AtletismoFase } from '../data/atletismoTypes';
+import { AtletismoExercise, AtletismoFase, DiaSemana } from '../data/atletismoTypes';
 import { confirm } from '../utils/webCompat';
+import { DIAS_ORDEN, todayISO } from '../utils/atletismoDate';
 
 const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   fondo: '🏞️',
@@ -15,6 +16,10 @@ const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   tempo: '🔥',
   cuestas: '⛰️',
   tirada_larga_especifica: '🏁',
+};
+
+const DIA_CORTO: Record<DiaSemana, string> = {
+  Lun: 'L', Mar: 'M', Mié: 'X', Jue: 'J', Vie: 'V', Sáb: 'S', Dom: 'D',
 };
 
 const FASE_LABEL: Record<AtletismoFase, string> = {
@@ -40,6 +45,7 @@ export default function AtletismoPlanDetailScreen() {
 
   if (!plan) return <Loading />;
 
+  const hoy = todayISO();
   const totalSesiones = plan.semanas.reduce((acc, s) => acc + s.sesiones.length, 0);
   const totalKm = Math.round(plan.semanas.reduce((acc, s) => acc + s.kilometrajeTotalKm, 0));
 
@@ -78,36 +84,44 @@ export default function AtletismoPlanDetailScreen() {
           <Text style={styles.vdotText}>VDOT estimado: {plan.ritmos.vdot}</Text>
         </View>
 
-        {plan.semanas.map(semana => (
-          <View key={semana.numero} style={styles.weekCard}>
-            <View style={styles.weekHeader}>
-              <Text style={styles.weekTitle}>Semana {semana.numero}</Text>
-              <Badge label={FASE_LABEL[semana.fase]} variant={FASE_BADGE[semana.fase]} />
-            </View>
-            <Text style={styles.weekMeta}>{semana.fechaInicio} → {semana.fechaFin} · {semana.kilometrajeTotalKm} km</Text>
+        {plan.semanas.map(semana => {
+          const esSemanaActual = hoy >= semana.fechaInicio && hoy <= semana.fechaFin;
+          return (
+            <View key={semana.numero} style={[styles.weekCard, esSemanaActual && styles.weekCardActual]}>
+              <View style={styles.weekHeader}>
+                <Text style={styles.weekTitle}>Semana {semana.numero}</Text>
+                <Badge label={FASE_LABEL[semana.fase]} variant={FASE_BADGE[semana.fase]} />
+              </View>
+              <Text style={styles.weekMeta}>{semana.fechaInicio} → {semana.fechaFin} · {semana.kilometrajeTotalKm} km</Text>
 
-            {semana.sesiones.length === 0 ? (
-              <Text style={styles.noSesiones}>Sin sesiones esta semana.</Text>
-            ) : semana.sesiones.map(sesion => (
-              <TouchableOpacity
-                key={sesion.id}
-                style={styles.sesionRow}
-                activeOpacity={0.8}
-                onPress={() => router.push({ pathname: '/atletismo-session-detail', params: { planId: String(plan.id), sessionId: String(sesion.id) } } as any)}
-              >
-                <Text style={styles.sesionEmoji}>{TIPO_EMOJI[sesion.tipo]}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.sesionNombre}>{sesion.nombre} · {sesion.dia} ({sesion.fecha})</Text>
-                  <Text style={styles.sesionDesc}>{sesion.cuerpo.desc}</Text>
-                  <Text style={styles.sesionMeta}>
-                    Calor: {sesion.entrada_en_calor.distanciaKm} km · Total est.: {sesion.distanciaTotalKm} km
-                  </Text>
-                </View>
-                <Text style={styles.sesionArrow}>›</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        ))}
+              <View style={styles.grid}>
+                {DIAS_ORDEN.map(dia => {
+                  const sesion = semana.sesiones.find(s => s.dia === dia);
+                  const esHoy = sesion?.fecha === hoy;
+                  return (
+                    <TouchableOpacity
+                      key={dia}
+                      style={[styles.dayCell, esHoy && styles.dayCellHoy]}
+                      activeOpacity={sesion ? 0.7 : 1}
+                      disabled={!sesion}
+                      onPress={() => sesion && router.push({ pathname: '/atletismo-session-detail', params: { planId: String(plan.id), sessionId: String(sesion.id) } } as any)}
+                    >
+                      <Text style={[styles.dayLabel, esHoy && styles.dayLabelHoy]}>{DIA_CORTO[dia]}</Text>
+                      {sesion ? (
+                        <>
+                          <Text style={styles.dayEmoji}>{TIPO_EMOJI[sesion.tipo]}</Text>
+                          <Text style={styles.dayKm}>{sesion.distanciaTotalKm}k</Text>
+                        </>
+                      ) : (
+                        <Text style={styles.dayRest}>—</Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
     </View>
   );
@@ -137,16 +151,18 @@ function createStyles(C: ReturnType<typeof useColors>) {
     summaryMeta: { color: C.text2, fontSize: font.sm, marginBottom: 2 },
     ritmosGrid: { flexDirection: 'row', gap: 8, marginTop: 10 },
     vdotText: { color: C.text3, fontSize: font.xs, marginTop: 8, fontStyle: 'italic' },
-    weekCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
+    weekCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10, borderWidth: 1.5, borderColor: 'transparent' },
+    weekCardActual: { borderColor: C.acc },
     weekHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     weekTitle: { color: C.text, fontSize: font.lg, fontWeight: '800' },
-    weekMeta: { color: C.text2, fontSize: font.xs, marginTop: 2, marginBottom: 8 },
-    noSesiones: { color: C.text3, fontSize: font.sm, fontStyle: 'italic' },
-    sesionRow: { flexDirection: 'row', gap: 10, backgroundColor: C.s2, borderRadius: radius.sm, padding: 10, marginTop: 6 },
-    sesionEmoji: { fontSize: 22, width: 28, textAlign: 'center' },
-    sesionNombre: { color: C.text, fontSize: font.sm, fontWeight: '800' },
-    sesionDesc: { color: C.text2, fontSize: font.xs, marginTop: 2 },
-    sesionMeta: { color: C.text3, fontSize: font.xs, marginTop: 4 },
-    sesionArrow: { color: C.text3, fontSize: 22, alignSelf: 'center' },
+    weekMeta: { color: C.text2, fontSize: font.xs, marginTop: 2, marginBottom: 10 },
+    grid: { flexDirection: 'row', justifyContent: 'space-between' },
+    dayCell: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: radius.sm, backgroundColor: C.s2, marginHorizontal: 2 },
+    dayCellHoy: { backgroundColor: 'rgba(232,255,71,0.13)', borderWidth: 1.5, borderColor: C.acc },
+    dayLabel: { fontSize: font.xs, color: C.text3, fontWeight: '700' },
+    dayLabelHoy: { color: C.acc },
+    dayEmoji: { fontSize: 18, marginTop: 4 },
+    dayKm: { fontSize: 9, color: C.text2, marginTop: 2, fontWeight: '600' },
+    dayRest: { fontSize: 14, color: C.text3, marginTop: 8, opacity: 0.5 },
   });
 }

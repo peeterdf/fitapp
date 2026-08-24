@@ -101,6 +101,13 @@ export default function AtletismoSessionDetailScreen() {
         </PhaseCard>
 
         <Btn
+          label="✏️ Editar sesión"
+          variant="secondary"
+          onPress={() => router.push({ pathname: '/edit-atletismo-session', params: { planId: String(plan.id), sessionId: String(sesion.id) } } as any)}
+          style={{ marginTop: 8 }}
+        />
+
+        <Btn
           label={enviando ? 'Generando...' : '⌚ Exportar entrenamiento (.FIT)'}
           onPress={enviarAGarmin}
           disabled={enviando}
