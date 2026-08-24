@@ -1,16 +1,20 @@
 import {
-  AtletismoExercise, AtletismoExerciseType, AtletismoFase, AtletismoFaseCuerpo,
-  AtletismoFaseEnfriamiento, AtletismoFaseEntradaCalor, AtletismoPlan, AtletismoPlanInputs,
-  AtletismoRitmos, AtletismoSemana, DiaSemana, ObjetivoCarrera,
+  AtletismoExercise, AtletismoExerciseType, AtletismoFase, AtletismoFaseCuerpo, AtletismoPlan,
+  AtletismoPlanInputs, AtletismoRitmos, AtletismoSemana, DiaSemana, ObjetivoCarrera,
 } from '../data/atletismoTypes';
-import { calcularRitmos, parseDuration } from './atletismoPace';
+import { calcularRitmos } from './atletismoPace';
+import {
+  DIAS_ORDEN, addDays, fechaParaDia, parseISODateLocal, startOfDay, toISODate, weekdayIndex,
+} from './atletismoDate';
+import {
+  NOMBRES_TIPO, cuerpoCuestas, cuerpoFartlek, cuerpoFondo, cuerpoSeries, cuerpoTempo,
+  cuerpoTiradaLargaEspecifica, entradaEnCalor, enfriamiento, estimarDistanciaCuerpoKm,
+} from './atletismoSessionBuilders';
 
 // ─── ATLETISMO: GENERADOR DE PLAN ────────────────────────────────────────
 // A partir de los inputs del formulario arma semanas desde hoy hasta la
 // fecha objetivo, distribuidas en fase base / específica / tapering, y
 // completa cada sesión con sus 3 fases (calor, cuerpo, enfriamiento).
-
-const DIAS_ORDEN: DiaSemana[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 const DIAS_POR_DEFECTO: Record<number, DiaSemana[]> = {
   1: ['Sáb'],
@@ -20,15 +24,6 @@ const DIAS_POR_DEFECTO: Record<number, DiaSemana[]> = {
   5: ['Lun', 'Mar', 'Mié', 'Vie', 'Sáb'],
   6: ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
   7: DIAS_ORDEN,
-};
-
-const NOMBRES_TIPO: Record<AtletismoExerciseType, string> = {
-  fondo: 'Fondo',
-  series: 'Series',
-  fartlek: 'Fartlek',
-  tempo: 'Tempo run',
-  cuestas: 'Cuestas',
-  tirada_larga_especifica: 'Tirada larga específica',
 };
 
 function clamp(v: number, min: number, max: number): number {
@@ -54,42 +49,6 @@ function elegirDias(n: number, preferidos?: DiaSemana[]): DiaSemana[] {
   return DIAS_ORDEN.filter(d => set.has(d));
 }
 
-function parseISODateLocal(iso: string): Date {
-  const [y, m, d] = iso.split('-').map(Number);
-  return new Date(y, (m || 1) - 1, d || 1);
-}
-
-function startOfDay(d: Date): Date {
-  const r = new Date(d);
-  r.setHours(0, 0, 0, 0);
-  return r;
-}
-
-function addDays(d: Date, n: number): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() + n);
-  return r;
-}
-
-function toISODate(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-// 0 = Lun ... 6 = Dom, alineado con DIAS_ORDEN (JS getDay() usa 0 = Dom)
-function weekdayIndex(d: Date): number {
-  return (d.getDay() + 6) % 7;
-}
-
-function fechaParaDia(inicioSemana: Date, dia: DiaSemana): Date {
-  const objetivoIdx = DIAS_ORDEN.indexOf(dia);
-  const inicioIdx = weekdayIndex(inicioSemana);
-  const diff = (objetivoIdx - inicioIdx + 7) % 7;
-  return addDays(inicioSemana, diff);
-}
-
 function calcularFases(totalSemanas: number): AtletismoFase[] {
   const taperSemanas = totalSemanas <= 2 ? Math.min(1, totalSemanas) : totalSemanas <= 6 ? 1 : 2;
   let baseSemanas = totalSemanas <= taperSemanas ? 0 : Math.max(1, Math.round((totalSemanas - taperSemanas) * 0.4));
@@ -106,59 +65,6 @@ function calcularFases(totalSemanas: number): AtletismoFase[] {
   while (fases.length < totalSemanas) fases.push('tapering');
   while (fases.length > totalSemanas) fases.pop();
   return fases;
-}
-
-// ─── Fases de cada sesión (calor / enfriamiento) ─────────────────────────
-
-function entradaEnCalor(): AtletismoFaseEntradaCalor {
-  return { distanciaKm: 2, tiempoMin: 12, desc: 'Trote suave + movilidad articular + 3-4 progresiones cortas.' };
-}
-function enfriamiento(): AtletismoFaseEnfriamiento {
-  return { distanciaKm: 1.2, tiempoMin: 8, desc: 'Trote muy suave + elongación general.' };
-}
-
-// ─── Cuerpo de cada tipo de sesión ────────────────────────────────────────
-
-function cuerpoFondo(km: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
-  const d = Math.round(km * 10) / 10;
-  return { distanciaKm: d, ritmoObjetivo: `${ritmos.fondo}/km`, desc: `Carrera continua a ritmo suave, ${d} km.` };
-}
-
-function cuerpoTempo(km: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
-  const d = Math.round(km * 10) / 10;
-  return { distanciaKm: d, ritmoObjetivo: `${ritmos.tempo}/km`, desc: `Ritmo sostenido cercano al umbral (mejora 10k), ${d} km continuos.` };
-}
-
-function cuerpoSeries(reps: number, distM: number, descansoSeg: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
-  return {
-    series: reps, distanciaSerieM: distM, descansoSeg, descansoTipo: 'trote suave',
-    ritmoObjetivo: `${ritmos.series}/km`,
-    desc: `${reps} × ${distM} m a ritmo de series, con ${descansoSeg}s de trote suave de recuperación entre repeticiones.`,
-  };
-}
-
-function cuerpoFartlek(tiempoMin: number): AtletismoFaseCuerpo {
-  const t = Math.round(tiempoMin);
-  return { tiempoMin: t, desc: `Fartlek libre de ${t} min: alternar tramos rápidos (1-3 min) con tramos suaves de recuperación según sensaciones.` };
-}
-
-function cuerpoCuestas(reps: number, distM: number, descansoSeg: number): AtletismoFaseCuerpo {
-  return {
-    series: reps, distanciaSerieM: distM, descansoSeg, descansoTipo: 'caminata', pendiente: 'moderada (5-8%)',
-    desc: `${reps} repechos de ${distM} m en subida moderada a esfuerzo fuerte, bajada caminando/trotando muy suave como recuperación.`,
-  };
-}
-
-function cuerpoTiradaLargaEspecifica(totalKm: number, kmRitmoObjetivo: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
-  const total = Math.round(totalKm * 10) / 10;
-  const especifico = Math.round(Math.min(kmRitmoObjetivo, total) * 10) / 10;
-  return {
-    distanciaKm: total, tramosRitmoObjetivoKm: especifico,
-    ritmoObjetivo: `${ritmos.ritmoObjetivoCarrera}/km en los tramos específicos`,
-    desc: especifico > 0
-      ? `Fondo largo de ${total} km a ritmo suave, con los últimos ${especifico} km a ritmo objetivo de carrera (${ritmos.ritmoObjetivoCarrera}/km).`
-      : `Fondo largo de ${total} km a ritmo suave, sin tramos específicos esta semana.`,
-  };
 }
 
 // ─── Roles de sesión por semana ───────────────────────────────────────────
@@ -261,16 +167,6 @@ function construirSesionesSemana(opts: {
     }
   });
   return resultado;
-}
-
-function estimarDistanciaCuerpoKm(cuerpo: AtletismoFaseCuerpo, ritmos: AtletismoRitmos): number {
-  if (cuerpo.distanciaKm !== undefined) return cuerpo.distanciaKm;
-  if (cuerpo.series && cuerpo.distanciaSerieM) return (cuerpo.series * cuerpo.distanciaSerieM) / 1000;
-  if (cuerpo.tiempoMin) {
-    const segPorKm = (parseDuration(ritmos.fondo) + parseDuration(ritmos.tempo)) / 2;
-    return (cuerpo.tiempoMin * 60) / segPorKm;
-  }
-  return 0;
 }
 
 // ─── Generador principal ──────────────────────────────────────────────────
