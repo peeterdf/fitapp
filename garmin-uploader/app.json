@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "Garmin Uploader",
+    "slug": "garmin-uploader",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.fitapp.garminuploader"
+    },
+    "android": {
+      "package": "com.fitapp.garminuploader"
+    }
+  }
+}
