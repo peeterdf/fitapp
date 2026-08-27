@@ -6,6 +6,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "assetBundlePatterns": ["**/*"],
+    "backgroundColor": "#0f0f0f",
+    "splash": {
+      "backgroundColor": "#0f0f0f",
+      "resizeMode": "contain"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.fitapp.garminuploader"
