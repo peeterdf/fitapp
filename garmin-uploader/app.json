@@ -17,6 +17,11 @@
     },
     "android": {
       "package": "com.fitapp.garminuploader"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "93b20440-e9bb-4789-afd2-37e72af176fb"
+      }
     }
   }
 }
