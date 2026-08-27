@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
@@ -8,6 +9,7 @@ import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoExercise, AtletismoFase } from '../data/atletismoTypes';
 import { generarFitDeSesion } from '../utils/atletismoFitExport';
 import { shareFitWorkout } from '../utils/atletismoFitShare';
+import { construirExportJSON } from '../utils/atletismoJsonExport';
 import { toast } from '../utils/webCompat';
 
 const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
@@ -55,6 +57,15 @@ export default function AtletismoSessionDetailScreen() {
       toast('No se pudo exportar', e instanceof Error ? e.message : 'Error desconocido.');
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function copiarJSON() {
+    try {
+      await Clipboard.setStringAsync(construirExportJSON(sesion!, plan!.ritmos));
+      toast('Copiado', 'Pegalo en la app Garmin Uploader para subir esta sesión a tu cuenta.');
+    } catch (e) {
+      toast('No se pudo copiar', e instanceof Error ? e.message : 'Error desconocido.');
     }
   }
 
@@ -119,6 +130,18 @@ export default function AtletismoSessionDetailScreen() {
           por USB a la compu, copiá el archivo .FIT a la carpeta GARMIN/NewFiles del
           dispositivo, desconectá y reiniciá el reloj si no aparece — Garmin lo mueve solo a
           Entrenar / Entrenamientos.
+        </Text>
+
+        <Btn
+          label="📋 Copiar JSON (para Garmin Uploader)"
+          variant="secondary"
+          onPress={copiarJSON}
+          style={{ marginTop: 8 }}
+        />
+        <Text style={styles.garminHint}>
+          Copia los datos de esta sesión al portapapeles. Abrí la app aparte "Garmin
+          Uploader", pegalos ahí y va a crear + programar el entrenamiento directo en tu
+          cuenta de Garmin — sin USB, pero usando un método no oficial (ver advertencia en esa app).
         </Text>
       </ScrollView>
     </View>
