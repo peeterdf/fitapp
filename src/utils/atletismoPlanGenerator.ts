@@ -169,20 +169,61 @@ function construirSesionesSemana(opts: {
   return resultado;
 }
 
-// ─── Generador principal ──────────────────────────────────────────────────
+// ─── Estructura de semanas (compartida entre el generador y el plan vacío) ─
 
-export function generarPlan(inputs: AtletismoPlanInputs): AtletismoPlan {
-  const ritmos = calcularRitmos(inputs.tiempo_actual_10k, inputs.objetivo_principal);
-
+function estructuraSemanas(fechaObjetivoISO: string) {
   const hoy = startOfDay(new Date());
-  const fechaObjetivo = startOfDay(parseISODateLocal(inputs.fecha_objetivo));
+  const fechaObjetivo = startOfDay(parseISODateLocal(fechaObjetivoISO));
   // Las semanas se alinean a Lun-Dom (semana calendario); las sesiones que
   // caerían antes de hoy dentro de la primera semana se filtran más abajo.
   const inicioLunes = addDays(hoy, -weekdayIndex(hoy));
   const diasHastaObjetivo = Math.max(1, Math.round((fechaObjetivo.getTime() - inicioLunes.getTime()) / 86400000));
   const totalSemanas = Math.max(1, Math.ceil(diasHastaObjetivo / 7));
-
   const fases = calcularFases(totalSemanas);
+  return { hoy, fechaObjetivo, inicioLunes, totalSemanas, fases };
+}
+
+/** Arma un plan sin sesiones (mismas semanas/fases/ritmos que generarPlan) para completar a mano. */
+export function generarPlanVacio(inputs: AtletismoPlanInputs): AtletismoPlan {
+  const ritmos = calcularRitmos(inputs.tiempo_actual_10k, inputs.objetivo_principal);
+  const { hoy, inicioLunes, totalSemanas, fases } = estructuraSemanas(inputs.fecha_objetivo);
+
+  const semanas: AtletismoSemana[] = [];
+  for (let semanaIdx = 0; semanaIdx < totalSemanas; semanaIdx++) {
+    const inicioSemana = addDays(inicioLunes, semanaIdx * 7);
+    semanas.push({
+      numero: semanaIdx + 1,
+      fechaInicio: toISODate(inicioSemana),
+      fechaFin: toISODate(addDays(inicioSemana, 6)),
+      fase: fases[semanaIdx],
+      sesiones: [],
+      kilometrajeTotalKm: 0,
+    });
+  }
+
+  return { id: Date.now(), createdAt: toISODate(hoy), inputs, ritmos, semanas };
+}
+
+/** Agrega una semana vacía al final de un plan existente (misma fase que la última). */
+export function agregarSemana(plan: AtletismoPlan): AtletismoSemana {
+  const ultima = plan.semanas[plan.semanas.length - 1];
+  const inicioSemana = ultima ? addDays(parseISODateLocal(ultima.fechaFin), 1) : addDays(startOfDay(new Date()), -weekdayIndex(startOfDay(new Date())));
+  return {
+    numero: (ultima?.numero ?? 0) + 1,
+    fechaInicio: toISODate(inicioSemana),
+    fechaFin: toISODate(addDays(inicioSemana, 6)),
+    fase: ultima?.fase ?? 'tapering',
+    sesiones: [],
+    kilometrajeTotalKm: 0,
+  };
+}
+
+// ─── Generador principal ──────────────────────────────────────────────────
+
+export function generarPlan(inputs: AtletismoPlanInputs): AtletismoPlan {
+  const ritmos = calcularRitmos(inputs.tiempo_actual_10k, inputs.objetivo_principal);
+
+  const { hoy, fechaObjetivo, inicioLunes, totalSemanas, fases } = estructuraSemanas(inputs.fecha_objetivo);
   const dias = elegirDias(inputs.dias_disponibles_por_semana, inputs.dias_preferidos);
 
   const rangoPorFase: Record<AtletismoFase, { inicio: number; fin: number }> = {

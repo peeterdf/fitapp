@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
 import { useColors } from '../contexts/ThemeContext';
-import { Badge, Loading } from '../components/UI';
+import { Badge, Btn, Loading } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoExercise, AtletismoFase, DiaSemana } from '../data/atletismoTypes';
-import { confirm } from '../utils/webCompat';
+import { confirm, shareOrDownloadJson, toast } from '../utils/webCompat';
+import { construirExportPlanJSON } from '../utils/atletismoPlanJsonExport';
 import { DIAS_ORDEN, todayISO } from '../utils/atletismoDate';
 
 const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
@@ -56,6 +58,23 @@ export default function AtletismoPlanDetailScreen() {
     });
   }
 
+  async function copiarPlanJSON() {
+    try {
+      await Clipboard.setStringAsync(construirExportPlanJSON(plan!));
+      toast('Copiado', 'Pegalo en "Importar plan" en otro plan/dispositivo para restaurarlo.');
+    } catch (e) {
+      toast('No se pudo copiar', e instanceof Error ? e.message : 'Error desconocido.');
+    }
+  }
+
+  async function exportarPlan() {
+    try {
+      await shareOrDownloadJson(construirExportPlanJSON(plan!), `plan-${plan!.inputs.objetivo_principal}-${plan!.inputs.fecha_objetivo}.json`);
+    } catch (e) {
+      toast('No se pudo exportar', e instanceof Error ? e.message : 'Error desconocido.');
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -63,6 +82,9 @@ export default function AtletismoPlanDetailScreen() {
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Plan {plan.inputs.objetivo_principal.toUpperCase()}</Text>
+        <TouchableOpacity onPress={() => router.push({ pathname: '/edit-atletismo-plan', params: { id: String(plan.id) } } as any)} style={styles.editBtn}>
+          <Text style={styles.editText}>✏️</Text>
+        </TouchableOpacity>
         <TouchableOpacity onPress={askDelete} style={styles.deleteBtn}>
           <Text style={styles.deleteText}>✕</Text>
         </TouchableOpacity>
@@ -84,6 +106,12 @@ export default function AtletismoPlanDetailScreen() {
           <Text style={styles.vdotText}>VDOT estimado: {plan.ritmos.vdot}</Text>
         </View>
 
+        <View style={styles.exportRow}>
+          <Btn label="📋 Copiar JSON" variant="secondary" onPress={copiarPlanJSON} style={{ flex: 1, marginRight: 6, marginTop: 0 }} />
+          <Btn label="⬇️ Exportar" variant="secondary" onPress={exportarPlan} style={{ flex: 1, marginLeft: 6, marginTop: 0 }} />
+        </View>
+        <Text style={styles.hint}>Exportá el plan completo para hacer backup o pasarlo a otro dispositivo — "Importar plan" desde la lista de planes lo restaura.</Text>
+
         {plan.semanas.map(semana => {
           const esSemanaActual = hoy >= semana.fechaInicio && hoy <= semana.fechaFin;
           return (
@@ -102,9 +130,10 @@ export default function AtletismoPlanDetailScreen() {
                     <TouchableOpacity
                       key={dia}
                       style={[styles.dayCell, esHoy && styles.dayCellHoy]}
-                      activeOpacity={sesion ? 0.7 : 1}
-                      disabled={!sesion}
-                      onPress={() => sesion && router.push({ pathname: '/atletismo-session-detail', params: { planId: String(plan.id), sessionId: String(sesion.id) } } as any)}
+                      activeOpacity={0.7}
+                      onPress={() => sesion
+                        ? router.push({ pathname: '/atletismo-session-detail', params: { planId: String(plan.id), sessionId: String(sesion.id) } } as any)
+                        : router.push({ pathname: '/new-atletismo-session', params: { planId: String(plan.id), semanaNumero: String(semana.numero), dia } } as any)}
                     >
                       <Text style={[styles.dayLabel, esHoy && styles.dayLabelHoy]}>{DIA_CORTO[dia]}</Text>
                       {sesion ? (
@@ -113,7 +142,7 @@ export default function AtletismoPlanDetailScreen() {
                           <Text style={styles.dayKm}>{sesion.distanciaTotalKm}k</Text>
                         </>
                       ) : (
-                        <Text style={styles.dayRest}>—</Text>
+                        <Text style={styles.dayRest}>+</Text>
                       )}
                     </TouchableOpacity>
                   );
@@ -144,13 +173,17 @@ function createStyles(C: ReturnType<typeof useColors>) {
     backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center' },
     backText: { color: C.text, fontSize: 18 },
     title: { flex: 1, fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
-    deleteBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,85,85,0.13)', alignItems: 'center', justifyContent: 'center' },
+    editBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.s2, alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
+    editText: { fontSize: 15 },
+    deleteBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,85,85,0.13)', alignItems: 'center', justifyContent: 'center', marginLeft: 8 },
     deleteText: { color: C.danger, fontSize: 16, fontWeight: '700' },
     scroll: { flex: 1, paddingHorizontal: 16 },
     summaryCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 14 },
     summaryMeta: { color: C.text2, fontSize: font.sm, marginBottom: 2 },
     ritmosGrid: { flexDirection: 'row', gap: 8, marginTop: 10 },
     vdotText: { color: C.text3, fontSize: font.xs, marginTop: 8, fontStyle: 'italic' },
+    exportRow: { flexDirection: 'row', marginBottom: 4 },
+    hint: { fontSize: font.xs, color: C.text3, marginBottom: 14, fontStyle: 'italic', lineHeight: 15 },
     weekCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10, borderWidth: 1.5, borderColor: 'transparent' },
     weekCardActual: { borderColor: C.acc },
     weekHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },

@@ -17,8 +17,15 @@ export default function AtletismoScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Atletismo</Text>
-        <Text style={styles.subtitle}>{plans.length} {plans.length === 1 ? 'plan' : 'planes'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <View>
+            <Text style={styles.title}>Atletismo</Text>
+            <Text style={styles.subtitle}>{plans.length} {plans.length === 1 ? 'plan' : 'planes'}</Text>
+          </View>
+          <TouchableOpacity onPress={() => router.push('/import-atletismo-plan' as any)} style={styles.importBtn} activeOpacity={0.8}>
+            <Text style={styles.importText}>📥 Importar</Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 110 }}>
         {plans.length === 0 ? (
@@ -67,6 +74,8 @@ function createStyles(C: ReturnType<typeof useColors>) {
     header: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
     title: { fontSize: font.xxl, fontWeight: '800', color: C.text, letterSpacing: -0.5 },
     subtitle: { fontSize: font.sm, color: C.text2, marginTop: 2 },
+    importBtn: { backgroundColor: C.s1, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 8, marginTop: 2 },
+    importText: { color: C.text2, fontSize: font.sm, fontWeight: '700' },
     scroll: { flex: 1, paddingHorizontal: 16 },
     card: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
     cardRow: { flexDirection: 'row', alignItems: 'center' },
