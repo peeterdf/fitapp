@@ -1,9 +1,14 @@
 import {
   AtletismoExercise, AtletismoExerciseType, AtletismoFase, AtletismoFaseCuerpo,
-  AtletismoFaseEnfriamiento, AtletismoFaseEntradaCalor, AtletismoRitmos, DiaSemana,
+  AtletismoFaseEnfriamiento, AtletismoFaseEntradaCalor, AtletismoRitmos, AtletismoTramo, DiaSemana,
 } from '../data/atletismoTypes';
-import { parseDuration } from './atletismoPace';
+import { formatPace, parseDuration } from './atletismoPace';
 import { diaSemanaFromISO } from './atletismoDate';
+
+function lerpNum(a: number, b: number, t: number): number {
+  const clamped = Math.min(1, Math.max(0, t));
+  return a + (b - a) * clamped;
+}
 
 // ─── ATLETISMO: CONSTRUCTORES DE SESIÓN ──────────────────────────────────
 // Compartidos entre el generador de plan y la edición manual de una sesión
@@ -17,6 +22,11 @@ export const NOMBRES_TIPO: Record<AtletismoExerciseType, string> = {
   tempo: 'Tempo run',
   cuestas: 'Cuestas',
   tirada_larga_especifica: 'Tirada larga específica',
+  progresivo: 'Progresivo',
+  piramide: 'Pirámide de ritmo',
+  series_variadas: 'Series de distancias variadas',
+  cruise_intervals: 'Series largas (cruise intervals)',
+  strides: 'Rectas (strides)',
 };
 
 export function entradaEnCalor(distanciaKm = 2, tiempoMin = 12): AtletismoFaseEntradaCalor {
@@ -68,8 +78,76 @@ export function cuerpoTiradaLargaEspecifica(totalKm: number, kmRitmoObjetivo: nu
   };
 }
 
+export function cuerpoProgresivo(km: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
+  const d = Math.round(km * 10) / 10;
+  return {
+    distanciaKm: d, ritmoObjetivo: `${ritmos.fondo}/km`, ritmoFinal: `${ritmos.tempo}/km`,
+    desc: `Progresivo de ${d} km: arrancar a ritmo fácil (${ritmos.fondo}/km) y acelerar de forma gradual hasta cerrar cerca del ritmo de umbral (${ritmos.tempo}/km).`,
+  };
+}
+
+/** Divide totalKm en `segmentos` tramos iguales, acelerando hacia el tramo central. */
+export function cuerpoPiramide(totalKm: number, segmentos: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
+  const n = Math.max(3, Math.round(segmentos));
+  const total = Math.round(totalKm * 10) / 10;
+  const tramoKm = total / n;
+  const tramoM = Math.round(tramoKm * 1000);
+  const fondoSeg = parseDuration(ritmos.fondo);
+  const seriesSeg = parseDuration(ritmos.series);
+  const centro = (n - 1) / 2;
+  const tramos: AtletismoTramo[] = Array.from({ length: n }, (_, i) => {
+    const distanciaDelCentro = centro === 0 ? 0 : Math.abs(i - centro) / centro;
+    const paceSeg = lerpNum(seriesSeg, fondoSeg, distanciaDelCentro);
+    return { reps: 1, distanciaM: tramoM, ritmoObjetivo: `${formatPace(paceSeg)}/km` };
+  });
+  const centroIdx = Math.round(centro);
+  return {
+    distanciaKm: total, tramos,
+    desc: `Pirámide de ritmo: ${total} km en ${n} tramos de ~${Math.round(tramoKm * 10) / 10} km, acelerando hacia el tramo central (${tramos[centroIdx].ritmoObjetivo}) y desacelerando después hasta volver a ritmo fondo.`,
+  };
+}
+
+/** Combina tramos de distinta longitud en una sesión, más rápido cuanto más corto el tramo. */
+export function cuerpoSeriesVariadas(grupos: { reps: number; distM: number; descansoSeg: number }[], ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
+  const seriesSeg = parseDuration(ritmos.series);
+  const tramos: AtletismoTramo[] = grupos.map(g => ({
+    reps: g.reps, distanciaM: g.distM, descansoSeg: g.descansoSeg, descansoTipo: 'trote suave',
+    ritmoObjetivo: `${formatPace(seriesSeg * Math.pow(g.distM / 400, 0.06))}/km`,
+  }));
+  const resumen = tramos.map(t => `${t.reps}×${t.distanciaM}m`).join(' + ');
+  return {
+    tramos,
+    desc: `Series de distancias variadas: ${resumen}, cada tramo a un ritmo más rápido cuanto más corta la distancia, con trote suave de recuperación entre repeticiones.`,
+  };
+}
+
+/** Repeticiones largas (1000-2000m) a ritmo umbral con pausa corta (ratio ~5:1 esfuerzo:pausa). */
+export function cuerpoCruiseIntervals(reps: number, distM: number, ritmos: AtletismoRitmos): AtletismoFaseCuerpo {
+  const tempoSegPorKm = parseDuration(ritmos.tempo);
+  const trabajoSeg = (distM / 1000) * tempoSegPorKm;
+  const descansoSeg = Math.max(30, Math.round(trabajoSeg / 5));
+  return {
+    series: reps, distanciaSerieM: distM, descansoSeg, descansoTipo: 'trote suave',
+    ritmoObjetivo: `${ritmos.tempo}/km`,
+    desc: `${reps} × ${distM} m a ritmo umbral, con ${descansoSeg}s de trote suave de recuperación (pausa corta, ~5:1 respecto al tiempo de esfuerzo).`,
+  };
+}
+
+/** Aceleraciones cortas y controladas, bajo costo de fatiga — no cuentan como sesión de calidad. */
+export function cuerpoStrides(reps: number, distM: number): AtletismoFaseCuerpo {
+  const n = Math.round(reps);
+  return {
+    series: n, distanciaSerieM: distM, descansoSeg: 60, descansoTipo: 'trote suave',
+    ritmoObjetivo: 'progresivo hasta rápido pero relajado, sin llegar a la fatiga',
+    desc: `${n} × ${distM} m progresivos: acelerar de forma controlada hasta un ritmo rápido pero relajado, volviendo caminando/trotando suave. Bajo costo de fatiga — sirve para sumar al final de un fondo suave sin que cuente como sesión de calidad.`,
+  };
+}
+
 export function estimarDistanciaCuerpoKm(cuerpo: AtletismoFaseCuerpo, ritmos: AtletismoRitmos): number {
   if (cuerpo.distanciaKm !== undefined) return cuerpo.distanciaKm;
+  if (cuerpo.tramos && cuerpo.tramos.length > 0) {
+    return cuerpo.tramos.reduce((acc, t) => acc + (t.reps * t.distanciaM) / 1000, 0);
+  }
   if (cuerpo.series && cuerpo.distanciaSerieM) return (cuerpo.series * cuerpo.distanciaSerieM) / 1000;
   if (cuerpo.tiempoMin) {
     const segPorKm = (parseDuration(ritmos.fondo) + parseDuration(ritmos.tempo)) / 2;
@@ -94,10 +172,10 @@ export function parametrosDesdeCuerpo(tipo: AtletismoExerciseType, cuerpo: Atlet
   return {
     km: cuerpo.distanciaKm ?? 0,
     minutos: cuerpo.tiempoMin ?? 0,
-    reps: cuerpo.series ?? 0,
-    distSerieM: cuerpo.distanciaSerieM ?? 0,
-    descansoSeg: cuerpo.descansoSeg ?? 0,
-    totalKm: tipo === 'tirada_larga_especifica' ? (cuerpo.distanciaKm ?? 0) : 0,
+    reps: cuerpo.series ?? cuerpo.tramos?.[0]?.reps ?? cuerpo.tramos?.length ?? 0,
+    distSerieM: cuerpo.distanciaSerieM ?? cuerpo.tramos?.[0]?.distanciaM ?? 0,
+    descansoSeg: cuerpo.descansoSeg ?? cuerpo.tramos?.[0]?.descansoSeg ?? 0,
+    totalKm: (tipo === 'tirada_larga_especifica' || tipo === 'piramide') ? (cuerpo.distanciaKm ?? 0) : 0,
     kmRitmoObjetivo: cuerpo.tramosRitmoObjetivoKm ?? 0,
   };
 }
@@ -110,6 +188,11 @@ export function construirCuerpo(tipo: AtletismoExerciseType, p: ParametrosCuerpo
     case 'series': return cuerpoSeries(p.reps, p.distSerieM, p.descansoSeg, ritmos);
     case 'cuestas': return cuerpoCuestas(p.reps, p.distSerieM, p.descansoSeg);
     case 'tirada_larga_especifica': return cuerpoTiradaLargaEspecifica(p.totalKm, p.kmRitmoObjetivo, ritmos);
+    case 'progresivo': return cuerpoProgresivo(p.km, ritmos);
+    case 'piramide': return cuerpoPiramide(p.totalKm, p.reps || 5, ritmos);
+    case 'series_variadas': return cuerpoSeriesVariadas([{ reps: p.reps, distM: p.distSerieM, descansoSeg: p.descansoSeg }], ritmos);
+    case 'cruise_intervals': return cuerpoCruiseIntervals(p.reps, p.distSerieM, ritmos);
+    case 'strides': return cuerpoStrides(p.reps, p.distSerieM);
   }
 }
 

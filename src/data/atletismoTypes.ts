@@ -8,9 +8,17 @@ export type AtletismoExerciseType =
   | 'fartlek'
   | 'tempo'
   | 'cuestas'
-  | 'tirada_larga_especifica';
+  | 'tirada_larga_especifica'
+  | 'progresivo'
+  | 'piramide'
+  | 'series_variadas'
+  | 'cruise_intervals'
+  | 'strides';
 
-export type AtletismoFase = 'base' | 'especifico' | 'tapering';
+// 'acumulacion'/'transformacion' desdoblan 'especifico' en planes de 9+ semanas
+// (ver calcularFases) — 'especifico' se sigue usando tal cual en planes de 4-8
+// semanas, donde no hay margen para separar ambos focos.
+export type AtletismoFase = 'base' | 'acumulacion' | 'transformacion' | 'especifico' | 'tapering';
 
 export interface AtletismoFaseEntradaCalor {
   distanciaKm: number;
@@ -24,17 +32,30 @@ export interface AtletismoFaseEnfriamiento {
   desc: string;
 }
 
+// Un tramo dentro de una sesión con estructura de múltiples bloques distintos
+// (piramide: cada tramo con reps=1; series_variadas: cada tramo agrupa varias
+// repeticiones de la misma distancia).
+export interface AtletismoTramo {
+  reps: number;
+  distanciaM: number;
+  ritmoObjetivo: string;
+  descansoSeg?: number;
+  descansoTipo?: 'trote suave' | 'caminata' | 'parado';
+}
+
 // Cuerpo (main) — no todos los campos aplican a todos los tipos.
 export interface AtletismoFaseCuerpo {
-  distanciaKm?: number;          // fondo, tempo, tirada_larga_especifica
+  distanciaKm?: number;          // fondo, tempo, tirada_larga_especifica, progresivo, piramide
   ritmoObjetivo?: string;        // pace de referencia para esta sesión, ej. "5:20/km"
-  series?: number;               // series, cuestas
+  ritmoFinal?: string;           // progresivo: ritmo al que se llega al final de la sesión
+  series?: number;               // series, cuestas, cruise_intervals, strides
   distanciaSerieM?: number;      // distancia de cada repetición (m)
   descansoSeg?: number;          // descanso entre repeticiones (s)
   descansoTipo?: 'trote suave' | 'caminata' | 'parado';
   pendiente?: string;            // cuestas: descripción de la pendiente
   tiempoMin?: number;            // fartlek: duración total libre
   tramosRitmoObjetivoKm?: number; // tirada_larga_especifica: km finales a ritmo objetivo de carrera
+  tramos?: AtletismoTramo[];     // piramide, series_variadas: bloques con ritmo/pausa propios
   desc: string;
 }
 
