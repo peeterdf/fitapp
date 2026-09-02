@@ -9,7 +9,7 @@ import { useColors } from '../contexts/ThemeContext';
 import { Btn, SectionTitle } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoPlanInputs, DiaSemana, ObjetivoCarrera } from '../data/atletismoTypes';
-import { generarPlan } from '../utils/atletismoPlanGenerator';
+import { generarPlan, generarPlanVacio } from '../utils/atletismoPlanGenerator';
 import { isValidDuration } from '../utils/atletismoPace';
 
 const DIAS: DiaSemana[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
@@ -40,6 +40,7 @@ export default function NewAtletismoPlanScreen() {
   const styles = useMemo(() => createStyles(C), [C]);
   const { addPlan } = useAtletismoContext();
 
+  const [modo, setModo] = useState<'auto' | 'manual'>('auto');
   const [objetivoPrincipal, setObjetivoPrincipal] = useState<ObjetivoCarrera>('10k');
   const [fechaObjetivo, setFechaObjetivo] = useState(todayPlus(56));
   const [objetivoSecundario, setObjetivoSecundario] = useState<ObjetivoCarrera | undefined>(undefined);
@@ -75,7 +76,7 @@ export default function NewAtletismoPlanScreen() {
       dias_preferidos: diasPreferidos.length > 0 ? diasPreferidos : undefined,
     };
 
-    const plan = generarPlan(inputs);
+    const plan = modo === 'manual' ? generarPlanVacio(inputs) : generarPlan(inputs);
     addPlan(plan);
     router.replace({ pathname: '/atletismo-plan-detail', params: { id: String(plan.id) } } as any);
   }
@@ -91,6 +92,27 @@ export default function NewAtletismoPlanScreen() {
         </View>
 
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <SectionTitle label="Modo" />
+          <View style={styles.segmentRow}>
+            <TouchableOpacity
+              style={[styles.segment, modo === 'auto' && styles.segmentActive]}
+              onPress={() => setModo('auto')}
+            >
+              <Text style={[styles.segmentText, modo === 'auto' && styles.segmentTextActive]}>Automático</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.segment, modo === 'manual' && styles.segmentActive]}
+              onPress={() => setModo('manual')}
+            >
+              <Text style={[styles.segmentText, modo === 'manual' && styles.segmentTextActive]}>Manual</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.hint}>
+            {modo === 'auto'
+              ? 'La app arma automáticamente todas las sesiones de cada semana.'
+              : 'Se crean las semanas vacías (con sus fechas y fase) y vos agregás cada sesión desde el detalle del plan.'}
+          </Text>
+
           <SectionTitle label="Objetivo" />
 
           <FieldLabel text="Objetivo principal" C={C} />
@@ -150,36 +172,40 @@ export default function NewAtletismoPlanScreen() {
           />
           <Text style={styles.hint}>Se usa para calcular tus ritmos de fondo, tempo, series y ritmo objetivo de carrera.</Text>
 
-          <SectionTitle label="Disponibilidad" />
+          {modo === 'auto' && (
+            <>
+              <SectionTitle label="Disponibilidad" />
 
-          <FieldLabel text="Días disponibles por semana" C={C} />
-          <TextInput
-            style={styles.input}
-            placeholder="3"
-            placeholderTextColor={C.text3}
-            value={diasPorSemana}
-            onChangeText={setDiasPorSemana}
-            keyboardType="numeric"
-          />
+              <FieldLabel text="Días disponibles por semana" C={C} />
+              <TextInput
+                style={styles.input}
+                placeholder="3"
+                placeholderTextColor={C.text3}
+                value={diasPorSemana}
+                onChangeText={setDiasPorSemana}
+                keyboardType="numeric"
+              />
 
-          <FieldLabel text="Días preferidos (opcional)" C={C} />
-          <View style={styles.diasRow}>
-            {DIAS.map(dia => {
-              const active = diasPreferidos.includes(dia);
-              return (
-                <TouchableOpacity
-                  key={dia}
-                  style={[styles.diaChip, active && styles.diaChipActive]}
-                  onPress={() => toggleDiaPreferido(dia)}
-                >
-                  <Text style={[styles.diaChipText, active && styles.diaChipTextActive]}>{dia}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-          <Text style={styles.hint}>Si no elegís días, el plan los distribuye automáticamente.</Text>
+              <FieldLabel text="Días preferidos (opcional)" C={C} />
+              <View style={styles.diasRow}>
+                {DIAS.map(dia => {
+                  const active = diasPreferidos.includes(dia);
+                  return (
+                    <TouchableOpacity
+                      key={dia}
+                      style={[styles.diaChip, active && styles.diaChipActive]}
+                      onPress={() => toggleDiaPreferido(dia)}
+                    >
+                      <Text style={[styles.diaChipText, active && styles.diaChipTextActive]}>{dia}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              <Text style={styles.hint}>Si no elegís días, el plan los distribuye automáticamente.</Text>
+            </>
+          )}
 
-          <Btn label="Generar plan ✓" onPress={crearPlan} style={{ marginTop: 24 }} />
+          <Btn label={modo === 'manual' ? 'Crear semanas vacías ✓' : 'Generar plan ✓'} onPress={crearPlan} style={{ marginTop: 24 }} />
           <Btn label="Cancelar" variant="ghost" onPress={() => router.back()} />
           <View style={{ height: 40 }} />
         </ScrollView>

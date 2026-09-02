@@ -1,5 +1,5 @@
 import {
-  AtletismoExercise, AtletismoExerciseType, AtletismoFaseCuerpo,
+  AtletismoExercise, AtletismoExerciseType, AtletismoFase, AtletismoFaseCuerpo,
   AtletismoFaseEnfriamiento, AtletismoFaseEntradaCalor, AtletismoRitmos, DiaSemana,
 } from '../data/atletismoTypes';
 import { parseDuration } from './atletismoPace';
@@ -135,6 +135,36 @@ export function reconstruirSesion(opts: {
     ...base,
     dia,
     fecha,
+    entrada_en_calor: ent,
+    cuerpo,
+    enfriamiento: enf,
+    distanciaTotalKm: Math.round((ent.distanciaKm + cuerpoKm + enf.distanciaKm) * 10) / 10,
+  };
+}
+
+/** Crea una sesión nueva desde cero (agregar sesión manual a un plan/semana existente). */
+export function crearSesion(opts: {
+  id: number;
+  tipo: AtletismoExerciseType;
+  semana: number;
+  fase: AtletismoFase;
+  fecha: string;
+  params: ParametrosCuerpo;
+  entradaKm: number;
+  entradaMin: number;
+  enfriamientoKm: number;
+  enfriamientoMin: number;
+  ritmos: AtletismoRitmos;
+}): AtletismoExercise {
+  const { id, tipo, semana, fase, fecha, params, entradaKm, entradaMin, enfriamientoKm, enfriamientoMin, ritmos } = opts;
+  const ent = entradaEnCalor(entradaKm, entradaMin);
+  const enf = enfriamiento(enfriamientoKm, enfriamientoMin);
+  const cuerpo = construirCuerpo(tipo, params, ritmos);
+  const cuerpoKm = estimarDistanciaCuerpoKm(cuerpo, ritmos);
+  const dia: DiaSemana = diaSemanaFromISO(fecha);
+
+  return {
+    id, tipo, nombre: NOMBRES_TIPO[tipo], semana, dia, fecha, fase,
     entrada_en_calor: ent,
     cuerpo,
     enfriamiento: enf,
