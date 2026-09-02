@@ -19,16 +19,25 @@ const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   tempo: '🔥',
   cuestas: '⛰️',
   tirada_larga_especifica: '🏁',
+  progresivo: '📈',
+  piramide: '🔺',
+  series_variadas: '🎯',
+  cruise_intervals: '⏲️',
+  strides: '⚡',
 };
 
 const FASE_LABEL: Record<AtletismoFase, string> = {
   base: 'Base',
+  acumulacion: 'Acumulación',
+  transformacion: 'Transformación',
   especifico: 'Específico',
   tapering: 'Tapering',
 };
 
 const FASE_BADGE: Record<AtletismoFase, 'acc' | 'green' | 'red'> = {
   base: 'acc',
+  acumulacion: 'acc',
+  transformacion: 'green',
   especifico: 'green',
   tapering: 'red',
 };

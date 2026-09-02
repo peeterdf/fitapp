@@ -7,7 +7,8 @@ import {
   DIAS_ORDEN, addDays, fechaParaDia, parseISODateLocal, startOfDay, toISODate, weekdayIndex,
 } from './atletismoDate';
 import {
-  NOMBRES_TIPO, cuerpoCuestas, cuerpoFartlek, cuerpoFondo, cuerpoSeries, cuerpoTempo,
+  NOMBRES_TIPO, cuerpoCruiseIntervals, cuerpoCuestas, cuerpoFartlek, cuerpoFondo, cuerpoPiramide,
+  cuerpoProgresivo, cuerpoSeries, cuerpoSeriesVariadas, cuerpoStrides, cuerpoTempo,
   cuerpoTiradaLargaEspecifica, entradaEnCalor, enfriamiento, estimarDistanciaCuerpoKm,
 } from './atletismoSessionBuilders';
 
@@ -49,22 +50,71 @@ function elegirDias(n: number, preferidos?: DiaSemana[]): DiaSemana[] {
   return DIAS_ORDEN.filter(d => set.has(d));
 }
 
-function calcularFases(totalSemanas: number): AtletismoFase[] {
-  const taperSemanas = totalSemanas <= 2 ? Math.min(1, totalSemanas) : totalSemanas <= 6 ? 1 : 2;
-  let baseSemanas = totalSemanas <= taperSemanas ? 0 : Math.max(1, Math.round((totalSemanas - taperSemanas) * 0.4));
-  let especificoSemanas = totalSemanas - taperSemanas - baseSemanas;
-  if (especificoSemanas < 0) {
-    baseSemanas = Math.max(0, baseSemanas + especificoSemanas);
-    especificoSemanas = 0;
+function ajustarLongitud(fases: AtletismoFase[], total: number, relleno: AtletismoFase): AtletismoFase[] {
+  const r = [...fases];
+  while (r.length < total) r.push(relleno);
+  while (r.length > total) r.pop();
+  return r;
+}
+
+// Duración del taper por distancia objetivo: 10k → 7-10 días (~1 semana),
+// 21k → 10-14 días (~2 semanas). Ver calcularFases y el tramo de tapering en
+// construirSesionesSemana para la reducción de volumen asociada.
+function taperSemanasPara(objetivo: ObjetivoCarrera): number {
+  return objetivo === '21k' ? 2 : 1;
+}
+
+/**
+ * Determina cuántas semanas dura cada fase según la duración total del plan:
+ *  - <3 semanas hasta la carrera: sin fase base, directo a específico corto + tapering.
+ *  - 4-8 semanas: 3 fases (base, especifico, tapering) — no hay margen para separar
+ *    "capacidad" de "ritmo de carrera", se solapan en una sola fase específica.
+ *  - 9+ semanas: 4 fases (base, acumulacion, transformacion, tapering), desdoblando
+ *    la fase específica en foco de capacidad aeróbica y foco de ritmo de carrera.
+ */
+export function calcularFases(totalSemanas: number, objetivo: ObjetivoCarrera): AtletismoFase[] {
+  if (totalSemanas <= 2) {
+    const taperSemanas = Math.min(1, totalSemanas);
+    const especificoSemanas = totalSemanas - taperSemanas;
+    return ajustarLongitud([
+      ...Array(especificoSemanas).fill('especifico' as const),
+      ...Array(taperSemanas).fill('tapering' as const),
+    ], totalSemanas, 'tapering');
   }
-  const fases: AtletismoFase[] = [
+
+  const taperDeseado = taperSemanasPara(objetivo);
+
+  if (totalSemanas <= 8) {
+    // Dejar al menos 2 semanas libres para base + específico.
+    const taperSemanas = Math.max(1, Math.min(taperDeseado, totalSemanas - 2));
+    let baseSemanas = Math.max(1, Math.round((totalSemanas - taperSemanas) * 0.4));
+    let especificoSemanas = totalSemanas - taperSemanas - baseSemanas;
+    if (especificoSemanas < 1) {
+      baseSemanas = Math.max(1, totalSemanas - taperSemanas - 1);
+      especificoSemanas = totalSemanas - taperSemanas - baseSemanas;
+    }
+    return ajustarLongitud([
+      ...Array(baseSemanas).fill('base' as const),
+      ...Array(especificoSemanas).fill('especifico' as const),
+      ...Array(taperSemanas).fill('tapering' as const),
+    ], totalSemanas, 'tapering');
+  }
+
+  const taperSemanas = taperDeseado;
+  const restantes = totalSemanas - taperSemanas;
+  let baseSemanas = Math.max(1, Math.round(restantes * 0.25));
+  let acumulacionSemanas = Math.max(1, Math.round(restantes * 0.35));
+  let transformacionSemanas = restantes - baseSemanas - acumulacionSemanas;
+  if (transformacionSemanas < 1) {
+    acumulacionSemanas = Math.max(1, acumulacionSemanas - (1 - transformacionSemanas));
+    transformacionSemanas = restantes - baseSemanas - acumulacionSemanas;
+  }
+  return ajustarLongitud([
     ...Array(baseSemanas).fill('base' as const),
-    ...Array(especificoSemanas).fill('especifico' as const),
+    ...Array(acumulacionSemanas).fill('acumulacion' as const),
+    ...Array(transformacionSemanas).fill('transformacion' as const),
     ...Array(taperSemanas).fill('tapering' as const),
-  ];
-  while (fases.length < totalSemanas) fases.push('tapering');
-  while (fases.length > totalSemanas) fases.pop();
-  return fases;
+  ], totalSemanas, 'tapering');
 }
 
 // ─── Roles de sesión por semana ───────────────────────────────────────────
@@ -73,6 +123,103 @@ interface SesionPlanificada {
   dia: DiaSemana;
   tipo: AtletismoExerciseType;
   cuerpo: AtletismoFaseCuerpo;
+}
+
+/**
+ * Sesiones de fase específico (planes 4-8 semanas) y transformación (planes
+ * 9+ semanas) — comparten exactamente la misma asignación de slots por día
+ * (qué índice hace de sesión dura principal, cuál de fondo largo, cuál de
+ * cuestas secundaria), rotando entre semanas qué builder concreto ocupa cada
+ * slot para meter variedad sin romper "1 principal + 1 secundaria + 1 fondo
+ * largo por semana" ni la separación entre sesiones duras.
+ */
+function construirSesionesEspecificoOTransformacion(opts: {
+  objetivo: ObjetivoCarrera;
+  dias: DiaSemana[];
+  ritmos: AtletismoRitmos;
+  progreso: number;
+  semanaIdxGlobal: number;
+}): SesionPlanificada[] {
+  const { objetivo, dias, ritmos, progreso, semanaIdxGlobal } = opts;
+  const n = dias.length;
+  const resultado: SesionPlanificada[] = [];
+
+  if (objetivo === '21k') {
+    const kmLarga = lerp(12, 19, progreso);
+    const kmEspecifico = lerp(2, 8, progreso);
+    const kmTempo = lerp(5, 8, progreso);
+    const kmFondo = lerp(7, 10, progreso);
+    const repsCuestas = Math.round(lerp(6, 10, progreso));
+    const idxLarga = n - 1; // la tirada larga va el último día disponible de la semana
+    // Con 5+ días alcanza para cuestas todas las semanas; con menos, se alternan
+    // semana por medio para no desplazar el tempo/la tirada larga.
+    const cuestasEstaSemana = n >= 5 || (n >= 3 && semanaIdxGlobal % 2 === 1);
+    const cicloPrincipal = semanaIdxGlobal % 3;
+    const cicloLarga = semanaIdxGlobal % 2;
+
+    dias.forEach((dia, i) => {
+      if (i === idxLarga) {
+        if (cicloLarga === 0) {
+          resultado.push({ dia, tipo: 'tirada_larga_especifica', cuerpo: cuerpoTiradaLargaEspecifica(kmLarga, kmEspecifico, ritmos) });
+        } else {
+          resultado.push({ dia, tipo: 'piramide', cuerpo: cuerpoPiramide(kmLarga, 5, ritmos) });
+        }
+      } else if (n >= 4 && i === 0) {
+        if (cicloPrincipal === 0) {
+          resultado.push({ dia, tipo: 'tempo', cuerpo: cuerpoTempo(kmTempo, ritmos) });
+        } else if (cicloPrincipal === 1) {
+          resultado.push({ dia, tipo: 'cruise_intervals', cuerpo: cuerpoCruiseIntervals(Math.round(lerp(3, 5, progreso)), 1200, ritmos) });
+        } else {
+          resultado.push({ dia, tipo: 'progresivo', cuerpo: cuerpoProgresivo(kmTempo + 2, ritmos) });
+        }
+      } else if (n >= 5 && i === 1) {
+        resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 80, 90) });
+      } else if (cuestasEstaSemana && n < 5 && i === (n >= 4 ? 1 : 0)) {
+        resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 80, 90) });
+      } else {
+        resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(kmFondo, ritmos) });
+      }
+    });
+    return resultado;
+  }
+
+  // objetivo 10k: priorizar series (o variantes) + tempo
+  const repsSeries = Math.round(lerp(5, 8, progreso));
+  const kmTempo = lerp(3, 6, progreso);
+  const kmFondo = lerp(6, 9, progreso);
+  const repsCuestas = Math.round(lerp(5, 8, progreso));
+  // Con 5+ días alcanza para cuestas todas las semanas; con menos, se alternan
+  // semana por medio (en vez del fondo restante) para no perder series ni tempo.
+  const cuestasEstaSemana = n >= 5 || (n >= 3 && semanaIdxGlobal % 2 === 1);
+  const cicloPrincipal = semanaIdxGlobal % 3;
+
+  dias.forEach((dia, i) => {
+    if (i === 0) {
+      if (cicloPrincipal === 0) {
+        resultado.push({ dia, tipo: 'series', cuerpo: cuerpoSeries(repsSeries, 1000, 120, ritmos) });
+      } else if (cicloPrincipal === 1) {
+        resultado.push({
+          dia, tipo: 'series_variadas',
+          cuerpo: cuerpoSeriesVariadas([
+            { reps: 3, distM: 300, descansoSeg: 90 },
+            { reps: 4, distM: 200, descansoSeg: 60 },
+            { reps: 6, distM: 100, descansoSeg: 45 },
+          ], ritmos),
+        });
+      } else {
+        resultado.push({ dia, tipo: 'cruise_intervals', cuerpo: cuerpoCruiseIntervals(Math.round(lerp(3, 5, progreso)), 1000, ritmos) });
+      }
+    } else if (n >= 2 && i === (n >= 4 ? 2 : 1)) {
+      resultado.push({ dia, tipo: 'tempo', cuerpo: cuerpoTempo(kmTempo, ritmos) });
+    } else if (n >= 5 && i === n - 2) {
+      resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 100, 90) });
+    } else if (cuestasEstaSemana && n < 5 && i === n - 1) {
+      resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 100, 90) });
+    } else {
+      resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(kmFondo, ritmos) });
+    }
+  });
+  return resultado;
 }
 
 function construirSesionesSemana(opts: {
@@ -89,9 +236,14 @@ function construirSesionesSemana(opts: {
 
   if (fase === 'base') {
     const kmFondo = lerp(5, 9, progreso);
+    // Los strides son de bajo costo (no cuentan como sesión de calidad): se
+    // agregan semana por medio en un día de fondo que no sea el largo ni el fartlek.
+    const usarStridesEstaSemana = n >= 4 && semanaIdxGlobal % 2 === 1;
     dias.forEach((dia, i) => {
       if (n >= 3 && i === Math.floor(n / 2)) {
         resultado.push({ dia, tipo: 'fartlek', cuerpo: cuerpoFartlek(lerp(20, 30, progreso)) });
+      } else if (usarStridesEstaSemana && i === 0) {
+        resultado.push({ dia, tipo: 'strides', cuerpo: cuerpoStrides(8, 100) });
       } else {
         const esLargo = i === n - 1 && n >= 2;
         resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(esLargo ? kmFondo * 1.3 : kmFondo, ritmos) });
@@ -100,26 +252,29 @@ function construirSesionesSemana(opts: {
     return resultado;
   }
 
-  if (fase === 'especifico' && objetivo === '21k') {
-    const kmLarga = lerp(12, 19, progreso);
-    const kmEspecifico = lerp(2, 8, progreso);
-    const kmTempo = lerp(5, 8, progreso);
-    const kmFondo = lerp(7, 10, progreso);
-    const repsCuestas = Math.round(lerp(6, 10, progreso));
-    const idxLarga = n - 1; // la tirada larga va el último día disponible de la semana
-    // Con 5+ días alcanza para cuestas todas las semanas; con menos, se alternan
-    // semana por medio para no desplazar el tempo/la tirada larga.
-    const cuestasEstaSemana = n >= 5 || (n >= 3 && semanaIdxGlobal % 2 === 1);
+  if (fase === 'acumulacion') {
+    // Amplía capacidad/potencia aeróbica: tirada larga con progresión, y
+    // cuestas o fartlek estructurado como primer estímulo de calidad (se
+    // alternan semana por medio, nunca ambos la misma semana).
+    const kmLarga = objetivo === '21k' ? lerp(13, 17, progreso) : lerp(9, 12, progreso);
+    const kmFondo = lerp(7, 9, progreso);
+    const repsCuestas = Math.round(lerp(6, 9, progreso));
+    const minFartlek = lerp(25, 35, progreso);
+    const idxLarga = n - 1;
+    const cuestasEstaSemana = semanaIdxGlobal % 2 === 0;
+    const stridesEstaSemana = n >= 4 && !cuestasEstaSemana;
 
     dias.forEach((dia, i) => {
       if (i === idxLarga) {
-        resultado.push({ dia, tipo: 'tirada_larga_especifica', cuerpo: cuerpoTiradaLargaEspecifica(kmLarga, kmEspecifico, ritmos) });
-      } else if (n >= 4 && i === 0) {
-        resultado.push({ dia, tipo: 'tempo', cuerpo: cuerpoTempo(kmTempo, ritmos) });
-      } else if (n >= 5 && i === 1) {
-        resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 80, 90) });
-      } else if (cuestasEstaSemana && n < 5 && i === (n >= 4 ? 1 : 0)) {
-        resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 80, 90) });
+        resultado.push({ dia, tipo: 'progresivo', cuerpo: cuerpoProgresivo(kmLarga, ritmos) });
+      } else if (n >= 3 && i === 0) {
+        if (cuestasEstaSemana) {
+          resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 80, 90) });
+        } else {
+          resultado.push({ dia, tipo: 'fartlek', cuerpo: cuerpoFartlek(minFartlek) });
+        }
+      } else if (stridesEstaSemana && i === 1) {
+        resultado.push({ dia, tipo: 'strides', cuerpo: cuerpoStrides(10, 100) });
       } else {
         resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(kmFondo, ritmos) });
       }
@@ -127,42 +282,25 @@ function construirSesionesSemana(opts: {
     return resultado;
   }
 
-  if (fase === 'especifico') {
-    // objetivo 10k: priorizar series + tempo
-    const repsSeries = Math.round(lerp(5, 8, progreso));
-    const kmTempo = lerp(3, 6, progreso);
-    const kmFondo = lerp(6, 9, progreso);
-    const repsCuestas = Math.round(lerp(5, 8, progreso));
-    // Con 5+ días alcanza para cuestas todas las semanas; con menos, se alternan
-    // semana por medio (en vez del fondo restante) para no perder series ni tempo.
-    const cuestasEstaSemana = n >= 5 || (n >= 3 && semanaIdxGlobal % 2 === 1);
-
-    dias.forEach((dia, i) => {
-      if (i === 0) {
-        resultado.push({ dia, tipo: 'series', cuerpo: cuerpoSeries(repsSeries, 1000, 120, ritmos) });
-      } else if (n >= 2 && i === (n >= 4 ? 2 : 1)) {
-        resultado.push({ dia, tipo: 'tempo', cuerpo: cuerpoTempo(kmTempo, ritmos) });
-      } else if (n >= 5 && i === n - 2) {
-        resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 100, 90) });
-      } else if (cuestasEstaSemana && n < 5 && i === n - 1) {
-        resultado.push({ dia, tipo: 'cuestas', cuerpo: cuerpoCuestas(repsCuestas, 100, 90) });
-      } else {
-        resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(kmFondo, ritmos) });
-      }
-    });
-    return resultado;
+  if (fase === 'especifico' || fase === 'transformacion') {
+    return construirSesionesEspecificoOTransformacion({ objetivo, dias, ritmos, progreso, semanaIdxGlobal });
   }
 
-  // tapering — volumen decreciente, sin sorpresas antes de la carrera
-  const kmFondo = lerp(6, 3, progreso);
+  // tapering — volumen decreciente parametrizado por distancia, sin sorpresas
+  // antes de la carrera; el shakeout final se resuelve en generarPlan (post-proceso)
+  // porque depende de la fecha real de la última sesión, no del slot semanal.
   if (objetivo === '21k') {
-    const kmLarga = lerp(12, 8, progreso);
+    // 21k: taper de 10-14 días, reducción de volumen ~40-60%.
+    const kmFondo = lerp(8, 3.5, progreso);
+    const kmLarga = lerp(14, 7, progreso);
     const kmEspecifico = lerp(3, 0, progreso);
     dias.forEach((dia, i) => {
       if (i === n - 1) {
         resultado.push({ dia, tipo: 'tirada_larga_especifica', cuerpo: cuerpoTiradaLargaEspecifica(kmLarga, kmEspecifico, ritmos) });
       } else if (i === 0 && n >= 3) {
         resultado.push({ dia, tipo: 'tempo', cuerpo: cuerpoTempo(lerp(4, 2, progreso), ritmos) });
+      } else if (i === 1 && n >= 4) {
+        resultado.push({ dia, tipo: 'strides', cuerpo: cuerpoStrides(8, 100) });
       } else {
         resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(kmFondo, ritmos) });
       }
@@ -170,9 +308,13 @@ function construirSesionesSemana(opts: {
     return resultado;
   }
 
+  // 10k: taper de 7-10 días, reducción de volumen ~40-50%.
+  const kmFondo = lerp(6, 3.5, progreso);
   dias.forEach((dia, i) => {
     if (i === 0 && n >= 3) {
       resultado.push({ dia, tipo: 'series', cuerpo: cuerpoSeries(Math.max(3, Math.round(lerp(5, 3, progreso))), 1000, 120, ritmos) });
+    } else if (i === 1 && n >= 4) {
+      resultado.push({ dia, tipo: 'strides', cuerpo: cuerpoStrides(8, 100) });
     } else {
       resultado.push({ dia, tipo: 'fondo', cuerpo: cuerpoFondo(kmFondo, ritmos) });
     }
@@ -182,7 +324,7 @@ function construirSesionesSemana(opts: {
 
 // ─── Estructura de semanas (compartida entre el generador y el plan vacío) ─
 
-function estructuraSemanas(fechaObjetivoISO: string) {
+function estructuraSemanas(fechaObjetivoISO: string, objetivo: ObjetivoCarrera) {
   const hoy = startOfDay(new Date());
   const fechaObjetivo = startOfDay(parseISODateLocal(fechaObjetivoISO));
   // Las semanas se alinean a Lun-Dom (semana calendario); las sesiones que
@@ -190,14 +332,14 @@ function estructuraSemanas(fechaObjetivoISO: string) {
   const inicioLunes = addDays(hoy, -weekdayIndex(hoy));
   const diasHastaObjetivo = Math.max(1, Math.round((fechaObjetivo.getTime() - inicioLunes.getTime()) / 86400000));
   const totalSemanas = Math.max(1, Math.ceil(diasHastaObjetivo / 7));
-  const fases = calcularFases(totalSemanas);
+  const fases = calcularFases(totalSemanas, objetivo);
   return { hoy, fechaObjetivo, inicioLunes, totalSemanas, fases };
 }
 
 /** Arma un plan sin sesiones (mismas semanas/fases/ritmos que generarPlan) para completar a mano. */
 export function generarPlanVacio(inputs: AtletismoPlanInputs): AtletismoPlan {
   const ritmos = calcularRitmos(inputs.tiempo_actual_10k, inputs.objetivo_principal);
-  const { hoy, inicioLunes, totalSemanas, fases } = estructuraSemanas(inputs.fecha_objetivo);
+  const { hoy, inicioLunes, totalSemanas, fases } = estructuraSemanas(inputs.fecha_objetivo, inputs.objetivo_principal);
 
   const semanas: AtletismoSemana[] = [];
   for (let semanaIdx = 0; semanaIdx < totalSemanas; semanaIdx++) {
@@ -234,11 +376,13 @@ export function agregarSemana(plan: AtletismoPlan): AtletismoSemana {
 export function generarPlan(inputs: AtletismoPlanInputs): AtletismoPlan {
   const ritmos = calcularRitmos(inputs.tiempo_actual_10k, inputs.objetivo_principal);
 
-  const { hoy, fechaObjetivo, inicioLunes, totalSemanas, fases } = estructuraSemanas(inputs.fecha_objetivo);
+  const { hoy, fechaObjetivo, inicioLunes, totalSemanas, fases } = estructuraSemanas(inputs.fecha_objetivo, inputs.objetivo_principal);
   const dias = elegirDias(inputs.dias_disponibles_por_semana, inputs.dias_preferidos);
 
   const rangoPorFase: Record<AtletismoFase, { inicio: number; fin: number }> = {
     base: { inicio: -1, fin: -1 },
+    acumulacion: { inicio: -1, fin: -1 },
+    transformacion: { inicio: -1, fin: -1 },
     especifico: { inicio: -1, fin: -1 },
     tapering: { inicio: -1, fin: -1 },
   };
@@ -292,6 +436,27 @@ export function generarPlan(inputs: AtletismoPlanInputs): AtletismoPlan {
       sesiones,
       kilometrajeTotalKm: Math.round(sesiones.reduce((acc, s) => acc + s.distanciaTotalKm, 0) * 10) / 10,
     });
+  }
+
+  // Shakeout final: la última sesión antes de la carrera (si cae 1-3 días
+  // antes) se reduce a un trote muy corto y suave, sin estímulo nuevo.
+  const todasSesiones = semanas.flatMap(s => s.sesiones);
+  const ultimaSesion = todasSesiones[todasSesiones.length - 1];
+  if (ultimaSesion) {
+    const diasHastaCarrera = Math.round((fechaObjetivo.getTime() - parseISODateLocal(ultimaSesion.fecha).getTime()) / 86400000);
+    if (diasHastaCarrera >= 1 && diasHastaCarrera <= 3) {
+      const shakeoutKm = 2.5;
+      const cuerpoShakeout = { ...cuerpoFondo(shakeoutKm, ritmos), desc: `Shakeout muy suave de ${shakeoutKm} km, solo para activar piernas antes de la carrera.` };
+      ultimaSesion.tipo = 'fondo';
+      ultimaSesion.nombre = NOMBRES_TIPO.fondo;
+      ultimaSesion.cuerpo = cuerpoShakeout;
+      const cuerpoKm = estimarDistanciaCuerpoKm(cuerpoShakeout, ritmos);
+      ultimaSesion.distanciaTotalKm = Math.round((ultimaSesion.entrada_en_calor.distanciaKm + cuerpoKm + ultimaSesion.enfriamiento.distanciaKm) * 10) / 10;
+      const semanaDeLaUltima = semanas.find(s => s.sesiones.includes(ultimaSesion));
+      if (semanaDeLaUltima) {
+        semanaDeLaUltima.kilometrajeTotalKm = Math.round(semanaDeLaUltima.sesiones.reduce((acc, s) => acc + s.distanciaTotalKm, 0) * 10) / 10;
+      }
+    }
   }
 
   return {

@@ -5,7 +5,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
-    "build:android": "eas build --platform android --profile preview"
+    "build:android": "eas build --platform android --profile preview",
+    "test:atletismo": "tsc src/utils/__tests__/atletismoPlanGenerator.test.ts --outDir .test-build --module commonjs --target es2019 --esModuleInterop --skipLibCheck --resolveJsonModule --moduleResolution node && node .test-build/utils/__tests__/atletismoPlanGenerator.test.js; STATUS=$?; rm -rf .test-build; exit $STATUS"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "1.23.1",
