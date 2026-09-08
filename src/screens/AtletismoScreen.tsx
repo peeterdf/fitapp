@@ -43,7 +43,7 @@ export default function AtletismoScreen() {
                 onPress={() => router.push({ pathname: '/atletismo-plan-detail', params: { id: String(plan.id) } } as any)}>
                 <View style={styles.cardRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.cardTitle}>Plan {plan.inputs.objetivo_principal.toUpperCase()}</Text>
+                    <Text style={styles.cardTitle}>{plan.nombre}</Text>
                     <Text style={styles.cardSub}>
                       {totalSemanas} {totalSemanas === 1 ? 'semana' : 'semanas'} · ~{totalKm} km totales
                     </Text>

@@ -105,6 +105,7 @@ export interface AtletismoSemana {
 
 export interface AtletismoPlan {
   id: number;
+  nombre: string; // ej. "10K · 15 nov 2026" — para distinguir planes en la lista
   createdAt: string;
   inputs: AtletismoPlanInputs;
   ritmos: AtletismoRitmos;

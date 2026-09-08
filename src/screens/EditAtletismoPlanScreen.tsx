@@ -9,7 +9,7 @@ import { useColors } from '../contexts/ThemeContext';
 import { Btn, SectionTitle } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { ObjetivoCarrera } from '../data/atletismoTypes';
-import { agregarSemana } from '../utils/atletismoPlanGenerator';
+import { agregarSemana, nombreUnico } from '../utils/atletismoPlanGenerator';
 import { calcularRitmos, isValidDuration } from '../utils/atletismoPace';
 import { confirm, toast } from '../utils/webCompat';
 
@@ -26,6 +26,7 @@ export default function EditAtletismoPlanScreen() {
 
   const plan = id ? plans.find(p => p.id === Number(id)) : undefined;
 
+  const [nombre, setNombre] = useState(plan?.nombre ?? '');
   const [objetivoPrincipal, setObjetivoPrincipal] = useState<ObjetivoCarrera>(plan?.inputs.objetivo_principal ?? '10k');
   const [fechaObjetivo, setFechaObjetivo] = useState(plan?.inputs.fecha_objetivo ?? '');
   const [tiempoActual10k, setTiempoActual10k] = useState(plan?.inputs.tiempo_actual_10k ?? '');
@@ -44,8 +45,11 @@ export default function EditAtletismoPlanScreen() {
       return;
     }
     const ritmos = calcularRitmos(tiempoActual10k.trim(), objetivoPrincipal);
+    const otrosNombres = plans.filter(p => p.id !== plan!.id).map(p => p.nombre);
+    const nombreFinal = nombre.trim() || plan!.nombre;
     updatePlan({
       ...plan!,
+      nombre: nombreFinal === plan!.nombre ? nombreFinal : nombreUnico(nombreFinal, otrosNombres),
       inputs: { ...plan!.inputs, objetivo_principal: objetivoPrincipal, fecha_objetivo: fechaObjetivo.trim(), tiempo_actual_10k: tiempoActual10k.trim() },
       ritmos,
     });
@@ -80,6 +84,17 @@ export default function EditAtletismoPlanScreen() {
         </View>
 
         <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          <SectionTitle label="Nombre" />
+          <FieldLabel text="Nombre del plan" C={C} />
+          <TextInput
+            style={styles.input}
+            placeholder={plan.nombre}
+            placeholderTextColor={C.text3}
+            value={nombre}
+            onChangeText={setNombre}
+          />
+          <Text style={styles.hint}>Usalo para distinguir este plan de otros (por ej. si tenés más de uno para la misma distancia).</Text>
+
           <SectionTitle label="Objetivo" />
 
           <FieldLabel text="Objetivo principal" C={C} />
