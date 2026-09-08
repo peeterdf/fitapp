@@ -3,7 +3,7 @@
 // este script se corre directo con `npx tsc` + `node` (ver comentario al final)
 // y usa asserts planos en vez de un framework, siguiendo el mismo criterio.
 import assert from 'assert';
-import { calcularFases, generarPlan, generarPlanVacio } from '../atletismoPlanGenerator';
+import { calcularFases, generarPlan, generarPlanVacio, nombrePlanPorDefecto, nombreUnico } from '../atletismoPlanGenerator';
 import {
   cuerpoCruiseIntervals, cuerpoFondo, cuerpoPiramide, cuerpoProgresivo, cuerpoSeriesVariadas,
   cuerpoStrides, crearSesion, estimarDistanciaCuerpoKm, reconstruirSesion,
@@ -211,6 +211,29 @@ function contarFases(fases: string[]): Record<string, number> {
   const plan = generarPlan(inputs);
   assert.ok(!plan.semanas.some(s => s.fase === 'base'), 'una carrera en 5 días no debería tener fase base');
   console.log('OK: replanificación a 5 días de la carrera no rompe y no mete fase base');
+}
+
+// ─── Nombre de plan dinámico (para distinguir planes en la lista) ────────
+
+{
+  const inputs10k: AtletismoPlanInputs = {
+    objetivo_principal: '10k', fecha_objetivo: '2026-11-15', tiempo_actual_10k: '48:00', dias_disponibles_por_semana: 4,
+  };
+  const inputs21k: AtletismoPlanInputs = { ...inputs10k, objetivo_principal: '21k', fecha_objetivo: '2027-03-01' };
+  const n10k = nombrePlanPorDefecto(inputs10k);
+  const n21k = nombrePlanPorDefecto(inputs21k);
+  assert.notStrictEqual(n10k, n21k, 'planes con objetivo/fecha distintos deberían nombrarse distinto');
+  assert.ok(n10k.includes('10K') && n10k.includes('2026'));
+
+  assert.strictEqual(nombreUnico(n10k, []), n10k);
+  assert.strictEqual(nombreUnico(n10k, [n10k]), `${n10k} (2)`);
+  assert.strictEqual(nombreUnico(n10k, [n10k, `${n10k} (2)`]), `${n10k} (3)`);
+
+  const plan = generarPlan(inputs10k);
+  assert.strictEqual(plan.nombre, n10k, 'generarPlan debería asignar el nombre dinámico por defecto');
+  const vacio = generarPlanVacio(inputs10k);
+  assert.strictEqual(vacio.nombre, n10k, 'generarPlanVacio debería asignar el nombre dinámico por defecto');
+  console.log('OK: nombrePlanPorDefecto/nombreUnico', { n10k, n21k });
 }
 
 console.log('\nTodos los checks pasaron.');

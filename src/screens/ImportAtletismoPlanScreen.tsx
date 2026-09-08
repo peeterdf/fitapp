@@ -10,13 +10,14 @@ import { useColors } from '../contexts/ThemeContext';
 import { Btn, SectionTitle } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { parseImportPlanJSON } from '../utils/atletismoPlanJsonExport';
+import { nombreUnico } from '../utils/atletismoPlanGenerator';
 import { toast } from '../utils/webCompat';
 
 export default function ImportAtletismoPlanScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => createStyles(C), [C]);
-  const { addPlan } = useAtletismoContext();
+  const { plans, addPlan } = useAtletismoContext();
 
   const [json, setJson] = useState('');
 
@@ -32,6 +33,7 @@ export default function ImportAtletismoPlanScreen() {
   function importar() {
     try {
       const plan = parseImportPlanJSON(json);
+      plan.nombre = nombreUnico(plan.nombre, plans.map(p => p.nombre));
       addPlan(plan);
       router.replace({ pathname: '/atletismo-plan-detail', params: { id: String(plan.id) } } as any);
     } catch (e) {

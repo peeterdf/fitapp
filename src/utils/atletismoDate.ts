@@ -45,3 +45,11 @@ export function diaSemanaFromISO(iso: string): DiaSemana {
 export function todayISO(): string {
   return toISODate(startOfDay(new Date()));
 }
+
+const MESES_CORTOS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+
+/** Formatea una fecha ISO como "15 nov 2026", para nombres de plan legibles. */
+export function formatFechaCorta(iso: string): string {
+  const d = parseISODateLocal(iso);
+  return `${d.getDate()} ${MESES_CORTOS[d.getMonth()]} ${d.getFullYear()}`;
+}

@@ -9,8 +9,9 @@ import { useColors } from '../contexts/ThemeContext';
 import { Btn, SectionTitle } from '../components/UI';
 import { useAtletismoContext } from '../contexts/AtletismoContext';
 import { AtletismoPlanInputs, DiaSemana, ObjetivoCarrera } from '../data/atletismoTypes';
-import { generarPlan, generarPlanVacio } from '../utils/atletismoPlanGenerator';
+import { generarPlan, generarPlanVacio, nombreUnico } from '../utils/atletismoPlanGenerator';
 import { isValidDuration } from '../utils/atletismoPace';
+import { formatFechaCorta } from '../utils/atletismoDate';
 
 const DIAS: DiaSemana[] = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
@@ -38,7 +39,7 @@ export default function NewAtletismoPlanScreen() {
   const router = useRouter();
   const C = useColors();
   const styles = useMemo(() => createStyles(C), [C]);
-  const { addPlan } = useAtletismoContext();
+  const { plans, addPlan } = useAtletismoContext();
 
   const [modo, setModo] = useState<'auto' | 'manual'>('auto');
   const [objetivoPrincipal, setObjetivoPrincipal] = useState<ObjetivoCarrera>('10k');
@@ -47,6 +48,11 @@ export default function NewAtletismoPlanScreen() {
   const [tiempoActual10k, setTiempoActual10k] = useState('');
   const [diasPorSemana, setDiasPorSemana] = useState('3');
   const [diasPreferidos, setDiasPreferidos] = useState<DiaSemana[]>([]);
+  const [nombre, setNombre] = useState('');
+
+  const nombrePorDefecto = isValidFutureDate(fechaObjetivo)
+    ? `${objetivoPrincipal.toUpperCase()} · ${formatFechaCorta(fechaObjetivo)}`
+    : `${objetivoPrincipal.toUpperCase()} · nueva carrera`;
 
   function toggleDiaPreferido(dia: DiaSemana) {
     setDiasPreferidos(prev => prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]);
@@ -77,6 +83,7 @@ export default function NewAtletismoPlanScreen() {
     };
 
     const plan = modo === 'manual' ? generarPlanVacio(inputs) : generarPlan(inputs);
+    plan.nombre = nombreUnico(nombre.trim() || nombrePorDefecto, plans.map(p => p.nombre));
     addPlan(plan);
     router.replace({ pathname: '/atletismo-plan-detail', params: { id: String(plan.id) } } as any);
   }
@@ -158,6 +165,16 @@ export default function NewAtletismoPlanScreen() {
               </TouchableOpacity>
             ))}
           </View>
+
+          <FieldLabel text="Nombre del plan (opcional)" C={C} />
+          <TextInput
+            style={styles.input}
+            placeholder={nombrePorDefecto}
+            placeholderTextColor={C.text3}
+            value={nombre}
+            onChangeText={setNombre}
+          />
+          <Text style={styles.hint}>Si lo dejás vacío, se usa "{nombrePorDefecto}" para poder distinguirlo de otros planes.</Text>
 
           <SectionTitle label="Nivel actual" />
 

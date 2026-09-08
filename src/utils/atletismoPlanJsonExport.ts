@@ -1,4 +1,5 @@
 import { AtletismoPlan } from '../data/atletismoTypes';
+import { nombrePlanPorDefecto } from './atletismoPlanGenerator';
 
 // Formato de intercambio para hacer backup/compartir un plan completo entre
 // dispositivos o con otra cuenta — no tiene relación con el JSON de sesión
@@ -27,5 +28,6 @@ export function parseImportPlanJSON(raw: string): AtletismoPlan {
     throw new Error('El JSON no tiene el formato de un plan de atletismo.');
   }
 
-  return { ...(plan as AtletismoPlan), id: Date.now() };
+  const p = plan as AtletismoPlan;
+  return { ...p, id: Date.now(), nombre: p.nombre || nombrePlanPorDefecto(p.inputs) };
 }

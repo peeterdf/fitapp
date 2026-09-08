@@ -90,7 +90,7 @@ export default function AtletismoPlanDetailScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backText}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.title}>Plan {plan.inputs.objetivo_principal.toUpperCase()}</Text>
+        <Text style={styles.title}>{plan.nombre}</Text>
         <TouchableOpacity onPress={() => router.push({ pathname: '/edit-atletismo-plan', params: { id: String(plan.id) } } as any)} style={styles.editBtn}>
           <Text style={styles.editText}>✏️</Text>
         </TouchableOpacity>

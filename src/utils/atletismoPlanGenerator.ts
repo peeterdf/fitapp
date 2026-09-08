@@ -4,7 +4,7 @@ import {
 } from '../data/atletismoTypes';
 import { calcularRitmos } from './atletismoPace';
 import {
-  DIAS_ORDEN, addDays, fechaParaDia, parseISODateLocal, startOfDay, toISODate, weekdayIndex,
+  DIAS_ORDEN, addDays, fechaParaDia, formatFechaCorta, parseISODateLocal, startOfDay, toISODate, weekdayIndex,
 } from './atletismoDate';
 import {
   NOMBRES_TIPO, cuerpoCruiseIntervals, cuerpoCuestas, cuerpoFartlek, cuerpoFondo, cuerpoPiramide,
@@ -322,6 +322,19 @@ function construirSesionesSemana(opts: {
   return resultado;
 }
 
+/** Nombre por defecto de un plan nuevo — objetivo + fecha de carrera, para poder distinguir planes en la lista. */
+export function nombrePlanPorDefecto(inputs: AtletismoPlanInputs): string {
+  return `${inputs.objetivo_principal.toUpperCase()} · ${formatFechaCorta(inputs.fecha_objetivo)}`;
+}
+
+/** Evita nombres repetidos: si `base` ya está en `existentes`, agrega " (2)", " (3)", etc. */
+export function nombreUnico(base: string, existentes: string[]): string {
+  if (!existentes.includes(base)) return base;
+  let i = 2;
+  while (existentes.includes(`${base} (${i})`)) i++;
+  return `${base} (${i})`;
+}
+
 // ─── Estructura de semanas (compartida entre el generador y el plan vacío) ─
 
 function estructuraSemanas(fechaObjetivoISO: string, objetivo: ObjetivoCarrera) {
@@ -354,7 +367,7 @@ export function generarPlanVacio(inputs: AtletismoPlanInputs): AtletismoPlan {
     });
   }
 
-  return { id: Date.now(), createdAt: toISODate(hoy), inputs, ritmos, semanas };
+  return { id: Date.now(), nombre: nombrePlanPorDefecto(inputs), createdAt: toISODate(hoy), inputs, ritmos, semanas };
 }
 
 /** Agrega una semana vacía al final de un plan existente (misma fase que la última). */
@@ -461,6 +474,7 @@ export function generarPlan(inputs: AtletismoPlanInputs): AtletismoPlan {
 
   return {
     id: Date.now(),
+    nombre: nombrePlanPorDefecto(inputs),
     createdAt: toISODate(hoy),
     inputs,
     ritmos,
