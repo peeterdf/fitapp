@@ -1,5 +1,5 @@
-import { AtletismoExercise, AtletismoRitmos } from './atletismoExportTypes';
-import { parsePaceToSeconds, paceSecPerKmToMs } from './pace';
+import { AtletismoExercise, AtletismoFaseCuerpo, AtletismoRitmos, AtletismoTramo } from './atletismoExportTypes';
+import { paceRangeSeconds, paceSecPerKmToMs } from './pace';
 
 // ─── SCHEMA DEL WORKOUT DE GARMIN (workout-service) ──────────────────────
 // Confirmado cruzando 3 fuentes reales (no de memoria):
@@ -85,9 +85,9 @@ function stepDistanceNoTarget(stepType: typeof STEP_TYPE[keyof typeof STEP_TYPE]
 }
 
 function stepDistancePace(km: number, paceStr: string): GarminStep {
-  const paceSec = parsePaceToSeconds(paceStr);
-  const low = paceSecPerKmToMs(paceSec + PACE_TOLERANCE_SEG); // más lento -> velocidad más baja
-  const high = paceSecPerKmToMs(Math.max(1, paceSec - PACE_TOLERANCE_SEG)); // más rápido -> velocidad más alta
+  const { lowSec, highSec } = paceRangeSeconds(paceStr, PACE_TOLERANCE_SEG);
+  const low = paceSecPerKmToMs(lowSec); // más lento -> velocidad más baja
+  const high = paceSecPerKmToMs(highSec); // más rápido -> velocidad más alta
   return {
     type: 'ExecutableStepDTO',
     stepOrder: nextOrder(),
@@ -120,19 +120,65 @@ function stepRepeat(iterations: number, buildInner: () => GarminStep[]): GarminS
   };
 }
 
+/** Un tramo de una sesión con estructura de bloques (piramide, series_variadas,
+ * o un progresivo/lo que sea editado a mano) — tolera "distanciaKm" o
+ * "distanciaM" y trata `reps` ausente/1 como un tramo único, sin repetición. */
+function pasoTramo(t: AtletismoTramo, ritmos: AtletismoRitmos): GarminStep[] {
+  const km = t.distanciaKm ?? (t.distanciaM ?? 0) / 1000;
+  const pace = t.ritmoObjetivo ?? ritmos.fondo;
+  const reps = t.reps && t.reps > 1 ? Math.round(t.reps) : 1;
+  if (reps > 1) {
+    return [
+      stepRepeat(reps, () => {
+        const inner = [stepDistancePace(km, pace)];
+        if (t.descansoSeg) inner.push(stepTime(STEP_TYPE.recovery, t.descansoSeg));
+        return inner;
+      }),
+    ];
+  }
+  return [stepDistancePace(km, pace)];
+}
+
 function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): GarminStep[] {
-  const c = sesion.cuerpo;
+  const c: AtletismoFaseCuerpo = sesion.cuerpo;
+
+  // Sesiones con estructura de tramos (piramide, series_variadas, o cualquier
+  // sesión editada a mano que use esta forma) — se arman a partir de `tramos`
+  // sin importar el `tipo`, así no dependemos de que coincida exactamente con
+  // lo que arma un builder de fitapp.
+  if (Array.isArray(c.tramos) && c.tramos.length > 0) {
+    return c.tramos.flatMap(t => pasoTramo(t, ritmos));
+  }
+
   switch (sesion.tipo) {
     case 'fondo':
       return [stepDistancePace(c.distanciaKm ?? 0, ritmos.fondo)];
     case 'tempo':
       return [stepDistancePace(c.distanciaKm ?? 0, ritmos.tempo)];
+    case 'progresivo': {
+      // Sin tramos explícitos: partir la distancia en un primer tramo suave y
+      // un tramo final acelerando hasta el ritmo de cierre.
+      const total = c.distanciaKm ?? 0;
+      const mitad = total / 2;
+      return [
+        stepDistancePace(mitad, c.ritmoObjetivo ?? ritmos.fondo),
+        stepDistancePace(total - mitad, c.ritmoFinal ?? ritmos.tempo),
+      ];
+    }
     case 'fartlek':
       return [stepTime(STEP_TYPE.interval, (c.tiempoMin ?? 0) * 60)];
     case 'series':
+    case 'cruise_intervals':
       return [
         stepRepeat(c.series ?? 1, () => [
-          stepDistancePace((c.distanciaSerieM ?? 0) / 1000, ritmos.series),
+          stepDistancePace((c.distanciaSerieM ?? 0) / 1000, c.ritmoObjetivo ?? ritmos.series),
+          stepTime(STEP_TYPE.recovery, c.descansoSeg ?? 0),
+        ]),
+      ];
+    case 'strides':
+      return [
+        stepRepeat(c.series ?? 1, () => [
+          stepDistanceNoTarget(STEP_TYPE.interval, c.distanciaSerieM ?? 0),
           stepTime(STEP_TYPE.recovery, c.descansoSeg ?? 0),
         ]),
       ];
@@ -154,7 +200,12 @@ function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): Garmin
       }
       return [stepDistancePace(total, ritmos.fondo)];
     }
+    case 'piramide':
+    case 'series_variadas':
+      // Debería venir siempre con `tramos` (manejado arriba); si no, fondo de relleno.
+      return c.distanciaKm ? [stepDistancePace(c.distanciaKm, ritmos.fondo)] : [];
   }
+  return [];
 }
 
 const SPORT_TYPE = { sportTypeId: 1, sportTypeKey: 'running' };

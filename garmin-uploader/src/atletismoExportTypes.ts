@@ -9,15 +9,35 @@ export type AtletismoExerciseType =
   | 'fartlek'
   | 'tempo'
   | 'cuestas'
-  | 'tirada_larga_especifica';
+  | 'tirada_larga_especifica'
+  | 'progresivo'
+  | 'piramide'
+  | 'series_variadas'
+  | 'cruise_intervals'
+  | 'strides';
+
+// Bloque dentro de una sesión con estructura de tramos (piramide, series_variadas,
+// o un progresivo editado a mano). `reps` y las unidades de distancia son
+// opcionales y se toleran en más de una forma porque sesiones editadas a mano
+// no siempre siguen exactamente el shape que arma fitapp.
+export interface AtletismoTramo {
+  reps?: number;
+  distanciaM?: number;
+  distanciaKm?: number;
+  ritmoObjetivo?: string;
+  descansoSeg?: number;
+}
 
 export interface AtletismoFaseCuerpo {
   distanciaKm?: number;
+  ritmoObjetivo?: string;
+  ritmoFinal?: string;
   series?: number;
   distanciaSerieM?: number;
   descansoSeg?: number;
   tiempoMin?: number;
   tramosRitmoObjetivoKm?: number;
+  tramos?: AtletismoTramo[];
 }
 
 export interface AtletismoExercise {
