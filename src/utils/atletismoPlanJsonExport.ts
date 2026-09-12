@@ -1,5 +1,8 @@
 import { AtletismoPlan } from '../data/atletismoTypes';
 import { nombrePlanPorDefecto } from './atletismoPlanGenerator';
+import { NOMBRES_TIPO } from './atletismoSessionBuilders';
+
+const TIPOS_VALIDOS = Object.keys(NOMBRES_TIPO);
 
 // Formato de intercambio para hacer backup/compartir un plan completo entre
 // dispositivos o con otra cuenta — no tiene relación con el JSON de sesión
@@ -29,5 +32,15 @@ export function parseImportPlanJSON(raw: string): AtletismoPlan {
   }
 
   const p = plan as AtletismoPlan;
+  for (const semana of p.semanas) {
+    for (const sesion of semana.sesiones ?? []) {
+      if (!TIPOS_VALIDOS.includes(sesion.tipo)) {
+        throw new Error(
+          `Tipo de sesión desconocido: "${sesion.tipo}" (semana ${semana.numero}, ${sesion.fecha}). Tipos válidos: ${TIPOS_VALIDOS.join(', ')}.`,
+        );
+      }
+    }
+  }
+
   return { ...p, id: Date.now(), nombre: p.nombre || nombrePlanPorDefecto(p.inputs) };
 }

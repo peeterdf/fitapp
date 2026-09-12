@@ -210,6 +210,59 @@ function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): Garmin
 
 const SPORT_TYPE = { sportTypeId: 1, sportTypeKey: 'running' };
 
+// ─── Validación contra lo que Garmin realmente acepta ────────────────────
+// Los ids/keys de STEP_TYPE/CONDITION_TYPE/TARGET_*/SPORT_TYPE de arriba ya
+// están cruzados contra 3 fuentes reales (ver comentario al principio del
+// archivo), pero eso no evita que un bug futuro en pasosCuerpo arme un paso
+// con un id que no está en esa lista, o un target de ritmo con NaN. Sin esta
+// validación, eso se descubre recién como un 400 críptico de la API de
+// Garmin (o algo que el reloj no sabe interpretar); con ella, falla acá con
+// un mensaje claro antes de siquiera intentar subirlo.
+const STEP_TYPE_IDS_VALIDOS = new Set<number>(Object.values(STEP_TYPE).map(t => t.stepTypeId));
+const CONDITION_TYPE_IDS_VALIDOS = new Set<number>(Object.values(CONDITION_TYPE).map(t => t.conditionTypeId));
+const TARGET_TYPE_IDS_VALIDOS = new Set<number>([TARGET_NONE.workoutTargetTypeId, TARGET_PACE.workoutTargetTypeId]);
+
+function validarPaso(paso: GarminStep, ruta: string): void {
+  if (!STEP_TYPE_IDS_VALIDOS.has(paso.stepType.stepTypeId)) {
+    throw new Error(`Workout inválido en ${ruta}: stepTypeId ${paso.stepType.stepTypeId} no es uno de los que acepta Garmin (${[...STEP_TYPE_IDS_VALIDOS].join(', ')}).`);
+  }
+
+  if (paso.type === 'RepeatGroupDTO') {
+    if (!paso.numberOfIterations || paso.numberOfIterations < 1) {
+      throw new Error(`Workout inválido en ${ruta}: un grupo de repetición necesita numberOfIterations >= 1 (fue ${paso.numberOfIterations}).`);
+    }
+    (paso.workoutSteps ?? []).forEach((hijo, i) => validarPaso(hijo, `${ruta} > repetición, paso ${i + 1}`));
+    return;
+  }
+
+  if (!paso.endCondition || !CONDITION_TYPE_IDS_VALIDOS.has(paso.endCondition.conditionTypeId)) {
+    throw new Error(`Workout inválido en ${ruta}: endCondition ${paso.endCondition?.conditionTypeId} no es uno de los que acepta Garmin (${[...CONDITION_TYPE_IDS_VALIDOS].join(', ')}).`);
+  }
+  if (!Number.isFinite(paso.endConditionValue) || (paso.endConditionValue as number) <= 0) {
+    throw new Error(`Workout inválido en ${ruta}: endConditionValue debe ser un número > 0 (fue ${paso.endConditionValue}) — revisá la distancia/duración de esta sesión.`);
+  }
+
+  if (!paso.targetType || !TARGET_TYPE_IDS_VALIDOS.has(paso.targetType.workoutTargetTypeId)) {
+    throw new Error(`Workout inválido en ${ruta}: targetType ${paso.targetType?.workoutTargetTypeId} no es uno de los que acepta Garmin (${[...TARGET_TYPE_IDS_VALIDOS].join(', ')}).`);
+  }
+  if (paso.targetType.workoutTargetTypeId === TARGET_PACE.workoutTargetTypeId) {
+    if (!Number.isFinite(paso.targetValueOne) || !Number.isFinite(paso.targetValueTwo)
+      || (paso.targetValueOne as number) <= 0 || (paso.targetValueTwo as number) <= 0) {
+      throw new Error(`Workout inválido en ${ruta}: target de ritmo con valores no numéricos (${paso.targetValueOne}, ${paso.targetValueTwo}) — revisá el formato del ritmo objetivo de esta sesión (ej. "5:30/km").`);
+    }
+  }
+}
+
+/** Recorre el workout armado y confirma que solo usa códigos que Garmin acepta, antes de subirlo. */
+export function validarWorkoutGarmin(workout: { sportType: { sportTypeId: number }; workoutSegments: { workoutSteps: GarminStep[] }[] }): void {
+  if (workout.sportType.sportTypeId !== SPORT_TYPE.sportTypeId) {
+    throw new Error(`Workout inválido: sportTypeId ${workout.sportType.sportTypeId} no es uno de los soportados (${SPORT_TYPE.sportTypeId}).`);
+  }
+  workout.workoutSegments.forEach((seg, si) => {
+    seg.workoutSteps.forEach((paso, pi) => validarPaso(paso, `segmento ${si + 1}, paso ${pi + 1}`));
+  });
+}
+
 export function construirWorkoutGarmin(sesion: AtletismoExercise, ritmos: AtletismoRitmos) {
   orderCounter = 1;
   const steps: GarminStep[] = [
@@ -218,7 +271,7 @@ export function construirWorkoutGarmin(sesion: AtletismoExercise, ritmos: Atleti
     stepTime(STEP_TYPE.cooldown, sesion.enfriamiento.tiempoMin * 60),
   ];
 
-  return {
+  const workout = {
     workoutId: undefined,
     ownerId: undefined,
     workoutName: `${sesion.nombre} - ${sesion.fecha}`,
@@ -232,4 +285,7 @@ export function construirWorkoutGarmin(sesion: AtletismoExercise, ritmos: Atleti
       },
     ],
   };
+
+  validarWorkoutGarmin(workout);
+  return workout;
 }
