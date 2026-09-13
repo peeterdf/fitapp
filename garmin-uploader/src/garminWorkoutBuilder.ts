@@ -202,6 +202,7 @@ function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): Garmin
     }
     case 'piramide':
     case 'series_variadas':
+    case 'carrera':
       // Debería venir siempre con `tramos` (manejado arriba); si no, fondo de relleno.
       return c.distanciaKm ? [stepDistancePace(c.distanciaKm, ritmos.fondo)] : [];
   }

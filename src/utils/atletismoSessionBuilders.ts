@@ -27,6 +27,7 @@ export const NOMBRES_TIPO: Record<AtletismoExerciseType, string> = {
   series_variadas: 'Series de distancias variadas',
   cruise_intervals: 'Series largas (cruise intervals)',
   strides: 'Rectas (strides)',
+  carrera: 'Carrera',
 };
 
 export function entradaEnCalor(distanciaKm = 2, tiempoMin = 12): AtletismoFaseEntradaCalor {
@@ -143,10 +144,25 @@ export function cuerpoStrides(reps: number, distM: number): AtletismoFaseCuerpo 
   };
 }
 
+/**
+ * Sesión de la carrera en sí — estrategia de ritmo por tramos del recorrido
+ * real. A diferencia del resto de los builders, esta normalmente no la arma
+ * el generador: se agrega a mano (o importando un plan) con los tramos ya
+ * definidos, porque depende del recorrido concreto de cada carrera.
+ */
+export function cuerpoCarrera(tramos: { distanciaKm: number; ritmoObjetivo: string; desc?: string }[], descGeneral: string): AtletismoFaseCuerpo {
+  const total = Math.round(tramos.reduce((acc, t) => acc + t.distanciaKm, 0) * 100) / 100;
+  const tramosOut: AtletismoTramo[] = tramos.map(t => ({ distanciaKm: t.distanciaKm, ritmoObjetivo: t.ritmoObjetivo, desc: t.desc }));
+  return { distanciaKm: total, tramos: tramosOut, desc: descGeneral };
+}
+
 export function estimarDistanciaCuerpoKm(cuerpo: AtletismoFaseCuerpo, ritmos: AtletismoRitmos): number {
   if (cuerpo.distanciaKm !== undefined) return cuerpo.distanciaKm;
   if (cuerpo.tramos && cuerpo.tramos.length > 0) {
-    return cuerpo.tramos.reduce((acc, t) => acc + (t.reps * t.distanciaM) / 1000, 0);
+    return cuerpo.tramos.reduce((acc, t) => {
+      const km = t.distanciaKm ?? (t.distanciaM ?? 0) / 1000;
+      return acc + km * (t.reps ?? 1);
+    }, 0);
   }
   if (cuerpo.series && cuerpo.distanciaSerieM) return (cuerpo.series * cuerpo.distanciaSerieM) / 1000;
   if (cuerpo.tiempoMin) {
@@ -175,7 +191,7 @@ export function parametrosDesdeCuerpo(tipo: AtletismoExerciseType, cuerpo: Atlet
     reps: cuerpo.series ?? cuerpo.tramos?.[0]?.reps ?? cuerpo.tramos?.length ?? 0,
     distSerieM: cuerpo.distanciaSerieM ?? cuerpo.tramos?.[0]?.distanciaM ?? 0,
     descansoSeg: cuerpo.descansoSeg ?? cuerpo.tramos?.[0]?.descansoSeg ?? 0,
-    totalKm: (tipo === 'tirada_larga_especifica' || tipo === 'piramide') ? (cuerpo.distanciaKm ?? 0) : 0,
+    totalKm: (tipo === 'tirada_larga_especifica' || tipo === 'piramide' || tipo === 'carrera') ? (cuerpo.distanciaKm ?? 0) : 0,
     kmRitmoObjetivo: cuerpo.tramosRitmoObjetivoKm ?? 0,
   };
 }
@@ -193,6 +209,9 @@ export function construirCuerpo(tipo: AtletismoExerciseType, p: ParametrosCuerpo
     case 'series_variadas': return cuerpoSeriesVariadas([{ reps: p.reps, distM: p.distSerieM, descansoSeg: p.descansoSeg }], ritmos);
     case 'cruise_intervals': return cuerpoCruiseIntervals(p.reps, p.distSerieM, ritmos);
     case 'strides': return cuerpoStrides(p.reps, p.distSerieM);
+    // La carrera se arma con tramos reales del recorrido (cuerpoCarrera), no
+    // con este editor genérico — este fallback solo evita romper la interfaz.
+    case 'carrera': return cuerpoFondo(p.totalKm || p.km, ritmos);
   }
 }
 

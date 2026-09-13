@@ -23,6 +23,7 @@ const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   series_variadas: '🎯',
   cruise_intervals: '⏲️',
   strides: '⚡',
+  carrera: '🏆',
 };
 
 const DIA_CORTO: Record<DiaSemana, string> = {

@@ -24,6 +24,7 @@ const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   series_variadas: '🎯',
   cruise_intervals: '⏲️',
   strides: '⚡',
+  carrera: '🏆',
 };
 
 const FASE_LABEL: Record<AtletismoFase, string> = {
@@ -112,6 +113,22 @@ export default function AtletismoSessionDetailScreen() {
           {c.ritmoObjetivo && <Row C={C} label="Ritmo objetivo" value={c.ritmoObjetivo} />}
           {c.tramosRitmoObjetivoKm !== undefined && <Row C={C} label="Tramos a ritmo objetivo" value={`${c.tramosRitmoObjetivoKm} km`} />}
           <Text style={styles.phaseDesc}>{c.desc}</Text>
+          {c.tramos && c.tramos.length > 0 && (
+            <View style={{ marginTop: 10, gap: 8 }}>
+              {c.tramos.map((t, i) => {
+                const km = t.distanciaKm ?? (t.distanciaM ?? 0) / 1000;
+                const repsLabel = t.reps && t.reps > 1 ? `${t.reps} × ` : '';
+                return (
+                  <View key={i} style={styles.tramoCard}>
+                    <Text style={styles.tramoTitle}>Tramo {i + 1} — {repsLabel}{Math.round(km * 100) / 100} km</Text>
+                    <Text style={styles.tramoRitmo}>{t.ritmoObjetivo}</Text>
+                    {t.descansoSeg !== undefined && <Text style={styles.tramoDesc}>Descanso: {t.descansoSeg}s ({t.descansoTipo})</Text>}
+                    {t.desc && <Text style={styles.tramoDesc}>{t.desc}</Text>}
+                  </View>
+                );
+              })}
+            </View>
+          )}
         </PhaseCard>
 
         <PhaseCard C={C} styles={styles} emoji="🧊" title="Enfriamiento">
@@ -190,6 +207,10 @@ function createStyles(C: ReturnType<typeof useColors>) {
     phaseCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10 },
     phaseTitle: { color: C.text, fontSize: font.md, fontWeight: '800', marginBottom: 4 },
     phaseDesc: { color: C.text2, fontSize: font.sm, marginTop: 8, lineHeight: 19 },
+    tramoCard: { backgroundColor: C.s2, borderRadius: radius.sm, padding: 10 },
+    tramoTitle: { color: C.text, fontSize: font.sm, fontWeight: '800' },
+    tramoRitmo: { color: C.acc, fontSize: font.sm, fontWeight: '700', marginTop: 2 },
+    tramoDesc: { color: C.text2, fontSize: font.xs, marginTop: 4, lineHeight: 16 },
     garminHint: { color: C.text3, fontSize: font.xs, marginTop: 8, fontStyle: 'italic', lineHeight: 16 },
   });
 }

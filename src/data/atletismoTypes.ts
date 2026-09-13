@@ -13,7 +13,8 @@ export type AtletismoExerciseType =
   | 'piramide'
   | 'series_variadas'
   | 'cruise_intervals'
-  | 'strides';
+  | 'strides'
+  | 'carrera';
 
 // 'acumulacion'/'transformacion' desdoblan 'especifico' en planes de 9+ semanas
 // (ver calcularFases) — 'especifico' se sigue usando tal cual en planes de 4-8
@@ -33,14 +34,19 @@ export interface AtletismoFaseEnfriamiento {
 }
 
 // Un tramo dentro de una sesión con estructura de múltiples bloques distintos
-// (piramide: cada tramo con reps=1; series_variadas: cada tramo agrupa varias
-// repeticiones de la misma distancia).
+// (piramide: cada tramo con reps=1 en metros; series_variadas: cada tramo
+// agrupa varias repeticiones de la misma distancia; carrera/progresivo con
+// tramos armados a mano: un solo tramo en km, sin reps, con su propia nota).
+// distanciaM y distanciaKm son alternativas — usar la que corresponda; reps
+// por defecto es 1 si no se especifica.
 export interface AtletismoTramo {
-  reps: number;
-  distanciaM: number;
+  reps?: number;
+  distanciaM?: number;
+  distanciaKm?: number;
   ritmoObjetivo: string;
   descansoSeg?: number;
   descansoTipo?: 'trote suave' | 'caminata' | 'parado';
+  desc?: string; // nota propia del tramo (ej. calles del recorrido en una carrera)
 }
 
 // Cuerpo (main) — no todos los campos aplican a todos los tipos.
