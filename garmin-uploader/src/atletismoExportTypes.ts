@@ -14,14 +14,15 @@ export type AtletismoExerciseType =
   | 'piramide'
   | 'series_variadas'
   | 'cruise_intervals'
-  | 'strides';
+  | 'strides'
+  | 'carrera';
 
 // Única fuente de verdad de los tipos válidos en esta app — si fitapp agrega
 // un tipo nuevo y no se refleja acá, queremos un error claro al pegar el
 // JSON, no un crash más adelante armando el workout de Garmin.
 export const TIPOS_VALIDOS: readonly AtletismoExerciseType[] = [
   'fondo', 'series', 'fartlek', 'tempo', 'cuestas', 'tirada_larga_especifica',
-  'progresivo', 'piramide', 'series_variadas', 'cruise_intervals', 'strides',
+  'progresivo', 'piramide', 'series_variadas', 'cruise_intervals', 'strides', 'carrera',
 ];
 
 export function esTipoValido(tipo: unknown): tipo is AtletismoExerciseType {

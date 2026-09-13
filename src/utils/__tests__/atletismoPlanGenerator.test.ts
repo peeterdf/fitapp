@@ -5,7 +5,7 @@
 import assert from 'assert';
 import { calcularFases, generarPlan, generarPlanVacio, nombrePlanPorDefecto, nombreUnico } from '../atletismoPlanGenerator';
 import {
-  cuerpoCruiseIntervals, cuerpoFondo, cuerpoPiramide, cuerpoProgresivo, cuerpoSeriesVariadas,
+  cuerpoCarrera, cuerpoCruiseIntervals, cuerpoFondo, cuerpoPiramide, cuerpoProgresivo, cuerpoSeriesVariadas,
   cuerpoStrides, crearSesion, estimarDistanciaCuerpoKm, reconstruirSesion,
 } from '../atletismoSessionBuilders';
 import { calcularRitmos } from '../atletismoPace';
@@ -234,6 +234,33 @@ function contarFases(fases: string[]): Record<string, number> {
   const vacio = generarPlanVacio(inputs10k);
   assert.strictEqual(vacio.nombre, n10k, 'generarPlanVacio debería asignar el nombre dinámico por defecto');
   console.log('OK: nombrePlanPorDefecto/nombreUnico', { n10k, n21k });
+}
+
+{
+  // cuerpoCarrera: sesión armada a mano con tramos en km (sin `reps`) — el
+  // caso real que rompía el import de un plan con la carrera como sesión.
+  const c = cuerpoCarrera([
+    { distanciaKm: 2, ritmoObjetivo: '4:50-4:55/km', desc: 'Arranque controlado.' },
+    { distanciaKm: 2, ritmoObjetivo: '4:40-4:45/km', desc: 'Bulevar plano.' },
+  ], 'Estrategia de ritmo por tramos del recorrido.');
+  assert.strictEqual(c.distanciaKm, 4);
+  assert.ok(c.tramos && c.tramos.length === 2 && c.tramos[0].desc === 'Arranque controlado.');
+  assert.strictEqual(estimarDistanciaCuerpoKm(c, ritmos), 4);
+  console.log('OK: cuerpoCarrera', c.desc);
+}
+
+{
+  // Tramos armados a mano (sin `reps`, en km) no deberían romper crearSesion
+  // ni el cálculo de distancia — es el shape real que llega al importar un
+  // plan editado por fuera del generador.
+  const s = crearSesion({
+    id: 1, tipo: 'carrera', semana: 3, fase: 'tapering', fecha: '2026-09-20',
+    params: { km: 0, minutos: 0, reps: 0, distSerieM: 0, descansoSeg: 0, totalKm: 0, kmRitmoObjetivo: 0 },
+    entradaKm: 1.5, entradaMin: 15, enfriamientoKm: 1, enfriamientoMin: 10, ritmos,
+  });
+  assert.strictEqual(s.tipo, 'carrera');
+  assert.ok(s.distanciaTotalKm > 0);
+  console.log('OK: crearSesion con tipo "carrera" no rompe', s.distanciaTotalKm);
 }
 
 console.log('\nTodos los checks pasaron.');
