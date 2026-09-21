@@ -46,6 +46,19 @@ function pasoRepechoDistancia(nombre: string, metros: number, intensity: FitWork
   };
 }
 
+// Igual que pasoContinuo pero sin target de ritmo — para tramos con ritmo
+// descriptivo/por sensación (patrón subida-bajada, carrera), donde no hay un
+// pace único que targetear.
+function pasoDistanciaAbierta(nombre: string, km: number, intensity: FitWorkoutStep['intensity']): FitWorkoutStep {
+  return {
+    name: nombre,
+    durationType: FIT_DURATION_TYPE.distance,
+    durationValue: Math.round(km * 100000), // km -> cm
+    targetType: FIT_TARGET_TYPE.open,
+    intensity,
+  };
+}
+
 function pasoRepetir(veces: number): FitWorkoutStep {
   return {
     name: `Repetir x${veces}`,
@@ -65,6 +78,13 @@ function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): FitWor
     case 'tempo':
       return [pasoContinuo('Tempo', c.distanciaKm ?? 0, ritmos.tempo, FIT_INTENSITY.active)];
     case 'fartlek':
+      // Fartlek libre por tiempo (el caso normal) vs. fartlek armado a mano con
+      // tramos (ej. patrón subida-bajada-subida-bajada): cada tramo exporta
+      // como un step de distancia sin target de ritmo, ya que su "ritmo" es
+      // por esfuerzo/sensación, no un pace numérico.
+      if (c.tramos && c.tramos.length > 0) {
+        return c.tramos.map((t, i) => pasoDistanciaAbierta(t.desc || `Tramo ${i + 1}`, t.distanciaKm ?? (t.distanciaM ?? 0) / 1000, FIT_INTENSITY.active));
+      }
       return [pasoAbierto('Fartlek libre', c.tiempoMin ?? 0, FIT_INTENSITY.active)];
     case 'series':
       return [
@@ -78,6 +98,12 @@ function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): FitWor
         pasoAbierto('Bajada / recuperación', (c.descansoSeg ?? 0) / 60, FIT_INTENSITY.rest),
         pasoRepetir(c.series ?? 1),
       ];
+    case 'bajada_tecnica':
+      return [
+        pasoRepechoDistancia(`${c.distanciaSerieM ?? 0} m bajada técnica`, c.distanciaSerieM ?? 0, FIT_INTENSITY.active),
+        pasoAbierto('Subida / recuperación', (c.descansoSeg ?? 0) / 60, FIT_INTENSITY.rest),
+        pasoRepetir(c.series ?? 1),
+      ];
     case 'tirada_larga_especifica': {
       const total = c.distanciaKm ?? 0;
       const especifico = Math.min(c.tramosRitmoObjetivoKm ?? 0, total);
@@ -89,6 +115,11 @@ function pasosCuerpo(sesion: AtletismoExercise, ritmos: AtletismoRitmos): FitWor
       }
       return [pasoContinuo('Fondo largo', total, ritmos.fondo, FIT_INTENSITY.active)];
     }
+    case 'carrera':
+      // Estrategia de ritmo por tramos del recorrido real — sin target de
+      // ritmo numérico porque cada tramo suele ser "por esfuerzo" (subida,
+      // bajada), no un pace fijo.
+      return (c.tramos ?? []).map((t, i) => pasoDistanciaAbierta(t.desc || `Tramo ${i + 1}`, t.distanciaKm ?? (t.distanciaM ?? 0) / 1000, FIT_INTENSITY.active));
     default:
       return [];
   }

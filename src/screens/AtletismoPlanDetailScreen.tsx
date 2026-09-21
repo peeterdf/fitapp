@@ -17,6 +17,7 @@ const TIPO_EMOJI: Record<AtletismoExercise['tipo'], string> = {
   fartlek: '🎲',
   tempo: '🔥',
   cuestas: '⛰️',
+  bajada_tecnica: '⛷️',
   tirada_larga_especifica: '🏁',
   progresivo: '📈',
   piramide: '🔺',

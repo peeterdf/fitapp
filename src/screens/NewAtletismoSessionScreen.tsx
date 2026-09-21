@@ -13,7 +13,7 @@ import { NOMBRES_TIPO, crearSesion } from '../utils/atletismoSessionBuilders';
 import { DIAS_ORDEN, fechaParaDia, parseISODateLocal, toISODate } from '../utils/atletismoDate';
 import { toast } from '../utils/webCompat';
 
-const TIPOS: AtletismoExerciseType[] = ['fondo', 'series', 'fartlek', 'tempo', 'cuestas', 'tirada_larga_especifica'];
+const TIPOS: AtletismoExerciseType[] = ['fondo', 'series', 'fartlek', 'tempo', 'cuestas', 'bajada_tecnica', 'tirada_larga_especifica'];
 
 function FieldLabel({ text, C }: { text: string; C: ReturnType<typeof useColors> }) {
   return <Text style={{ fontSize: font.xs, color: C.text2, fontWeight: '700', letterSpacing: 0.5, marginBottom: 5, marginTop: 6 }}>{text.toUpperCase()}</Text>;
@@ -150,7 +150,7 @@ export default function NewAtletismoSessionScreen() {
             </>
           )}
 
-          {(tipo === 'series' || tipo === 'cuestas') && (
+          {(tipo === 'series' || tipo === 'cuestas' || tipo === 'bajada_tecnica') && (
             <>
               <View style={styles.row2}>
                 <View style={{ flex: 1 }}>
