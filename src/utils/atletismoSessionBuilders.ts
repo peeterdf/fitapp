@@ -21,6 +21,7 @@ export const NOMBRES_TIPO: Record<AtletismoExerciseType, string> = {
   fartlek: 'Fartlek',
   tempo: 'Tempo run',
   cuestas: 'Cuestas',
+  bajada_tecnica: 'Bajada técnica',
   tirada_larga_especifica: 'Tirada larga específica',
   progresivo: 'Progresivo',
   piramide: 'Pirámide de ritmo',
@@ -64,6 +65,14 @@ export function cuerpoCuestas(reps: number, distM: number, descansoSeg: number):
   return {
     series: reps, distanciaSerieM: distM, descansoSeg, descansoTipo: 'caminata', pendiente: 'moderada (5-8%)',
     desc: `${reps} repechos de ${distM} m en subida moderada a esfuerzo fuerte, bajada caminando/trotando muy suave como recuperación.`,
+  };
+}
+
+/** Repeticiones cortas en bajada técnica (sendero), foco en cadencia y pisada — no en ritmo. */
+export function cuerpoBajadaTecnica(reps: number, distM: number, descansoSeg: number): AtletismoFaseCuerpo {
+  return {
+    series: reps, distanciaSerieM: distM, descansoSeg, descansoTipo: 'trote suave', pendiente: 'técnica (12-20%)',
+    desc: `${reps} bajadas técnicas de ${distM} m en sendero, foco en cadencia corta, pisada controlada y frenar con las piernas (no clavando talones); subida trotando suave de vuelta como recuperación.`,
   };
 }
 
@@ -203,6 +212,7 @@ export function construirCuerpo(tipo: AtletismoExerciseType, p: ParametrosCuerpo
     case 'fartlek': return cuerpoFartlek(p.minutos);
     case 'series': return cuerpoSeries(p.reps, p.distSerieM, p.descansoSeg, ritmos);
     case 'cuestas': return cuerpoCuestas(p.reps, p.distSerieM, p.descansoSeg);
+    case 'bajada_tecnica': return cuerpoBajadaTecnica(p.reps, p.distSerieM, p.descansoSeg);
     case 'tirada_larga_especifica': return cuerpoTiradaLargaEspecifica(p.totalKm, p.kmRitmoObjetivo, ritmos);
     case 'progresivo': return cuerpoProgresivo(p.km, ritmos);
     case 'piramide': return cuerpoPiramide(p.totalKm, p.reps || 5, ritmos);

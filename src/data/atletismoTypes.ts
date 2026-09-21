@@ -8,6 +8,7 @@ export type AtletismoExerciseType =
   | 'fartlek'
   | 'tempo'
   | 'cuestas'
+  | 'bajada_tecnica'
   | 'tirada_larga_especifica'
   | 'progresivo'
   | 'piramide'

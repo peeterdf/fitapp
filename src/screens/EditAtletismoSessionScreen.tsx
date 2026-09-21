@@ -149,7 +149,7 @@ export default function EditAtletismoSessionScreen() {
             </>
           )}
 
-          {(sesion.tipo === 'series' || sesion.tipo === 'cuestas') && (
+          {(sesion.tipo === 'series' || sesion.tipo === 'cuestas' || sesion.tipo === 'bajada_tecnica') && (
             <>
               <View style={styles.row2}>
                 <View style={{ flex: 1 }}>

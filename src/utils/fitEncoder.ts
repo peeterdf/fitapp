@@ -128,7 +128,11 @@ const WORKOUT_STEP_FIELDS: FieldDef[] = [
 // FIT global enum codes (verified against @garmin/fitsdk's Profile.types).
 export const FIT_DURATION_TYPE = { time: 0, distance: 1, open: 5, repeatUntilStepsCmplt: 6 } as const;
 export const FIT_TARGET_TYPE = { speed: 0, open: 2 } as const;
-export const FIT_INTENSITY = { active: 0, rest: 1, warmup: 2, cooldown: 3 } as const;
+// active/rest/warmup/cooldown son las únicas usadas hoy en atletismoFitExport.ts;
+// recovery/interval/other se agregaron después en el Profile oficial (confirmado
+// contra garmin/fit-python-sdk, Profile Version 21.214.0) y quedan disponibles
+// para cuando se necesiten, sin usarse todavía.
+export const FIT_INTENSITY = { active: 0, rest: 1, warmup: 2, cooldown: 3, recovery: 4, interval: 5, other: 6 } as const;
 const FIT_SPORT_RUNNING = 1;
 const FIT_FILE_TYPE_WORKOUT = 5;
 const FIT_MANUFACTURER_DEVELOPMENT = 255;
