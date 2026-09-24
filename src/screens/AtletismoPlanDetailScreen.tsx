@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
@@ -55,12 +55,21 @@ export default function AtletismoPlanDetailScreen() {
   const { plans, deletePlan } = useAtletismoContext();
 
   const plan = id ? plans.find(p => p.id === Number(id)) : undefined;
+  const [zonasAbiertas, setZonasAbiertas] = useState(false);
 
   if (!plan) return <Loading />;
 
   const hoy = todayISO();
   const totalSesiones = plan.semanas.reduce((acc, s) => acc + s.sesiones.length, 0);
   const totalKm = Math.round(plan.semanas.reduce((acc, s) => acc + s.kilometrajeTotalKm, 0));
+
+  async function abrirMaps(url: string) {
+    try {
+      await Linking.openURL(url);
+    } catch (e) {
+      toast('No se pudo abrir el mapa', e instanceof Error ? e.message : 'Error desconocido.');
+    }
+  }
 
   function askDelete() {
     confirm('Eliminar plan', '¿Eliminar este plan de atletismo?', () => {
@@ -122,6 +131,30 @@ export default function AtletismoPlanDetailScreen() {
           <Btn label="⬇️ Exportar" variant="secondary" onPress={exportarPlan} style={{ flex: 1, marginLeft: 6, marginTop: 0 }} />
         </View>
         <Text style={styles.hint}>Exportá el plan completo para hacer backup o pasarlo a otro dispositivo — "Importar plan" desde la lista de planes lo restaura.</Text>
+
+        {plan.zonasEntrenamiento && plan.zonasEntrenamiento.length > 0 && (
+          <View style={styles.zonasCard}>
+            <TouchableOpacity style={styles.zonasHeader} onPress={() => setZonasAbiertas(v => !v)} activeOpacity={0.7}>
+              <Text style={styles.zonasTitle}>📍 Zonas de entrenamiento ({plan.zonasEntrenamiento.length})</Text>
+              <Text style={styles.zonasChevron}>{zonasAbiertas ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+            {zonasAbiertas && (
+              <View style={{ marginTop: 10, gap: 10 }}>
+                {plan.zonasEntrenamiento.map((zona, i) => (
+                  <View key={i} style={styles.zonaItem}>
+                    <View style={styles.zonaHeaderRow}>
+                      <Text style={styles.zonaNombre}>{zona.nombre}</Text>
+                      <Badge label={zona.tipo} variant="acc" />
+                    </View>
+                    <Text style={styles.zonaMeta}>{zona.distancia} · sirve para: {zona.uso}</Text>
+                    {zona.notas ? <Text style={styles.zonaNotas}>{zona.notas}</Text> : null}
+                    <Btn label="🗺️ Abrir en Maps" variant="secondary" onPress={() => abrirMaps(zona.mapsUrl)} style={{ marginTop: 8 }} />
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
 
         {plan.semanas.map(semana => {
           const esSemanaActual = hoy >= semana.fechaInicio && hoy <= semana.fechaFin;
@@ -195,6 +228,15 @@ function createStyles(C: ReturnType<typeof useColors>) {
     vdotText: { color: C.text3, fontSize: font.xs, marginTop: 8, fontStyle: 'italic' },
     exportRow: { flexDirection: 'row', marginBottom: 4 },
     hint: { fontSize: font.xs, color: C.text3, marginBottom: 14, fontStyle: 'italic', lineHeight: 15 },
+    zonasCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 14 },
+    zonasHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    zonasTitle: { color: C.text, fontSize: font.md, fontWeight: '800' },
+    zonasChevron: { color: C.text2, fontSize: font.sm },
+    zonaItem: { backgroundColor: C.s2, borderRadius: radius.sm, padding: 12 },
+    zonaHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+    zonaNombre: { color: C.text, fontSize: font.sm, fontWeight: '800', flex: 1 },
+    zonaMeta: { color: C.text2, fontSize: font.xs, marginTop: 4 },
+    zonaNotas: { color: C.text3, fontSize: font.xs, marginTop: 4, lineHeight: 16 },
     weekCard: { backgroundColor: C.s1, borderRadius: radius.md, padding: 14, marginBottom: 10, borderWidth: 1.5, borderColor: 'transparent' },
     weekCardActual: { borderColor: C.acc },
     weekHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
