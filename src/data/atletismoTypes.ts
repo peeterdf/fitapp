@@ -110,6 +110,18 @@ export interface AtletismoSemana {
   kilometrajeTotalKm: number;
 }
 
+// Lugar real (parque, cerro, circuito) donde se corren las sesiones de
+// terreno/desnivel del plan — opcional, se completa a mano o al importar un
+// plan armado con zonas ya definidas (ver zonasEntrenamiento en AtletismoPlan).
+export interface AtletismoZonaEntrenamiento {
+  nombre: string;
+  tipo: string; // ej. "llano", "escaleras reales, cortas y empinadas"
+  uso: string; // para qué sesión sirve, ej. "cuestas (estímulo sostenido)"
+  distancia: string;
+  notas: string;
+  mapsUrl: string;
+}
+
 export interface AtletismoPlan {
   id: number;
   nombre: string; // ej. "10K · 15 nov 2026" — para distinguir planes en la lista
@@ -117,4 +129,5 @@ export interface AtletismoPlan {
   inputs: AtletismoPlanInputs;
   ritmos: AtletismoRitmos;
   semanas: AtletismoSemana[];
+  zonasEntrenamiento?: AtletismoZonaEntrenamiento[];
 }

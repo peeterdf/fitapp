@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { radius, font } from '../data/theme';
@@ -58,6 +58,18 @@ export default function AtletismoSessionDetailScreen() {
   if (!plan || !sesion) return <Loading />;
 
   const c = sesion.cuerpo;
+  // Coincidencia simple por nombre — si la descripción de la sesión menciona
+  // una zona del plan (ej. "Zona: Turó de la Rovira..."), la mostramos como
+  // chip para ir directo a esa ubicación en Maps sin tener que buscarla.
+  const zonasMencionadas = (plan.zonasEntrenamiento ?? []).filter(z => c.desc.includes(z.nombre));
+
+  async function abrirMaps(url: string) {
+    try {
+      await Linking.openURL(url);
+    } catch (e) {
+      toast('No se pudo abrir el mapa', e instanceof Error ? e.message : 'Error desconocido.');
+    }
+  }
 
   async function enviarAGarmin() {
     setEnviando(true);
@@ -114,6 +126,15 @@ export default function AtletismoSessionDetailScreen() {
           {c.ritmoObjetivo && <Row C={C} label="Ritmo objetivo" value={c.ritmoObjetivo} />}
           {c.tramosRitmoObjetivoKm !== undefined && <Row C={C} label="Tramos a ritmo objetivo" value={`${c.tramosRitmoObjetivoKm} km`} />}
           <Text style={styles.phaseDesc}>{c.desc}</Text>
+          {zonasMencionadas.length > 0 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+              {zonasMencionadas.map((zona, i) => (
+                <TouchableOpacity key={i} style={styles.zonaChip} onPress={() => abrirMaps(zona.mapsUrl)} activeOpacity={0.7}>
+                  <Text style={styles.zonaChipText}>📍 {zona.nombre}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
           {c.tramos && c.tramos.length > 0 && (
             <View style={{ marginTop: 10, gap: 8 }}>
               {c.tramos.map((t, i) => {
@@ -212,6 +233,8 @@ function createStyles(C: ReturnType<typeof useColors>) {
     tramoTitle: { color: C.text, fontSize: font.sm, fontWeight: '800' },
     tramoRitmo: { color: C.acc, fontSize: font.sm, fontWeight: '700', marginTop: 2 },
     tramoDesc: { color: C.text2, fontSize: font.xs, marginTop: 4, lineHeight: 16 },
+    zonaChip: { backgroundColor: C.s2, borderRadius: radius.full, paddingHorizontal: 12, paddingVertical: 7, borderWidth: 1.5, borderColor: C.s3 },
+    zonaChipText: { color: C.acc, fontSize: font.xs, fontWeight: '700' },
     garminHint: { color: C.text3, fontSize: font.xs, marginTop: 8, fontStyle: 'italic', lineHeight: 16 },
   });
 }
